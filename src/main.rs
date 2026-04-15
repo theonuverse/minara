@@ -231,6 +231,7 @@ const INSTANCE_ID_FILENAME: &str = ".minara_instance_id";
 const STOP_GRACEFUL_TIMEOUT: Duration = Duration::from_secs(5);
 const STOP_CTRL_C_TIMEOUT: Duration = Duration::from_secs(5);
 const STOP_FORCE_KILL_TIMEOUT: Duration = Duration::from_secs(5);
+const TRANSPARENT_LOGO_PNG: &[u8] = include_bytes!("../assets/transparent_logo.png");
 
 #[derive(Debug, Clone, Copy)]
 struct StaleProcessCleanupOutcome {
@@ -1451,6 +1452,13 @@ async fn check_url_exists(url: &str) -> bool {
     }
 }
 
+async fn logo() -> impl IntoResponse {
+    let mut headers = HeaderMap::new();
+    headers.insert(header::CONTENT_TYPE, HeaderValue::from_static("image/png"));
+    headers.insert(header::CACHE_CONTROL, HeaderValue::from_static("public, max-age=86400"));
+    (headers, TRANSPARENT_LOGO_PNG)
+}
+
 #[tokio::main]
 async fn main() {
     let development_mode = std::env::args().any(|arg| arg == "-d");
@@ -1503,6 +1511,7 @@ async fn main() {
 
     let app = Router::new()
         .nest_service("/assets", ServeDir::new("assets"))
+        .route("/logo", get(logo))
         .route("/", get(index))
         .route("/instance/{name}", get(console))
         .route("/instance/{name}/main", get(console))
