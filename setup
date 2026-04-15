@@ -5,8 +5,6 @@
 # - Always installs/updates bionilux stack
 # - Installs Minara binary from a fixed release asset
 #
-set -euo pipefail
-
 readonly PREFIX="${PREFIX:-/data/data/com.termux/files/usr}"
 readonly GLIBC_PREFIX="$PREFIX/glibc"
 readonly BOX64_DEST="$PREFIX/bionilux/box64/bin/box64"
