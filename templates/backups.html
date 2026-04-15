@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Backups - Minara</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap');
+
+        :root {
+            --surface-0: #0d0d0d;
+            --surface-1: #151515;
+            --surface-2: #1d1d1d;
+            --surface-3: #252525;
+
+            --text-primary: #f7f7f7;
+            --text-secondary: #b6b6b6;
+            --text-tertiary: #8a8a8a;
+
+            --accent: #ff7d3b;
+            --accent-hover: #ff965f;
+            --accent-soft: rgba(255, 125, 59, 0.16);
+            --accent-soft-strong: rgba(255, 125, 59, 0.28);
+
+            --line-subtle: rgba(255, 255, 255, 0.1);
+            --line-accent: rgba(255, 125, 59, 0.55);
+            --line-danger: rgba(255, 90, 90, 0.58);
+
+            --shadow-sm: 0 7px 20px rgba(0, 0, 0, 0.3);
+
+            --radius-sm: 5px;
+            --radius-md: 5px;
+
+            --bg-base: var(--surface-0);
+            --text-strong: var(--text-primary);
+            --text-soft: var(--text-secondary);
+            --text-subtle: var(--text-tertiary);
+            --text-muted: var(--text-secondary);
+            --pumpkin-border: 1px solid var(--line-subtle);
+
+            --success-bg: rgba(107, 211, 144, 0.13);
+            --success-border: rgba(107, 211, 144, 0.42);
+            --success-text: #d5f5de;
+            --error-bg: rgba(233, 106, 94, 0.15);
+            --error-border: rgba(233, 106, 94, 0.52);
+            --error-text: #ffd9d4;
+        }
+
+        * { font-family: 'Manrope', sans-serif; box-sizing: border-box; }
+
+        body {
+            background-color: var(--bg-base);
+            color: var(--text-strong);
+        }
+
+        .rounded-sm,
+        .rounded-md {
+            border-radius: var(--radius-sm) !important;
+        }
+
+        nav a {
+            border: 1px solid var(--line-subtle);
+            border-radius: var(--radius-sm);
+            transition: border-color 0.16s ease, background 0.16s ease, box-shadow 0.16s ease, color 0.16s ease, transform 0.16s ease;
+        }
+
+        nav a:hover {
+            transform: translateY(-1px);
+            border-color: var(--line-accent);
+            background: var(--accent-soft);
+            box-shadow: var(--shadow-sm);
+            color: var(--text-primary) !important;
+        }
+
+        .panel {
+            position: relative;
+            border: var(--pumpkin-border);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-sm);
+            overflow: hidden;
+        }
+
+        .panel::before {
+            content: none;
+        }
+
+        .create-panel,
+        .browser-panel {
+            background-color: var(--surface-1);
+            border-color: var(--line-subtle);
+        }
+
+        .select,
+        .btn,
+        .btn-muted,
+        .btn-danger,
+        .menu-button {
+            border-radius: var(--radius-sm);
+            border: var(--pumpkin-border);
+            transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease, background 0.12s ease, color 0.12s ease;
+        }
+
+        .select {
+            background: rgba(15, 15, 15, 0.82);
+            color: var(--text-primary);
+            padding: 10px 12px;
+            width: 100%;
+            outline: none;
+            border-color: rgba(255, 125, 59, 0.4);
+        }
+
+        .select:focus {
+            border-color: var(--line-accent);
+            box-shadow: 0 0 0 3px rgba(255, 125, 59, 0.22);
+        }
+
+        .btn {
+            background: var(--accent);
+            color: #111;
+            border-color: var(--line-accent);
+            font-weight: 600;
+            padding: 10px 14px;
+            font-size: 13px;
+            cursor: pointer;
+            box-shadow: 0 6px 18px rgba(255, 125, 59, 0.24);
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            background: var(--accent-hover);
+            box-shadow: 0 10px 24px rgba(255, 125, 59, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            transform: none;
+            box-shadow: none;
+            cursor: not-allowed;
+        }
+
+        .btn-muted {
+            background: rgba(28, 28, 28, 0.88);
+            color: var(--text-secondary);
+            font-weight: 600;
+            padding: 9px 12px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .btn-muted:hover {
+            border-color: var(--line-accent);
+            color: var(--text-primary);
+            transform: translateY(-1px);
+            background: rgba(33, 30, 28, 0.95);
+        }
+
+        .btn-danger {
+            background: rgba(255, 90, 90, 0.16);
+            border-color: var(--line-danger);
+            color: var(--error-text);
+            font-weight: 600;
+            padding: 9px 12px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .btn-danger:hover {
+            background: rgba(255, 90, 90, 0.24);
+            transform: translateY(-1px);
+        }
+
+        .status {
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--line-subtle);
+            padding: 10px 12px;
+            font-size: 13px;
+            margin-top: 12px;
+            display: none;
+        }
+
+        .status.success {
+            display: block;
+            background: var(--success-bg);
+            border-color: var(--success-border);
+            color: var(--success-text);
+        }
+
+        .status.error {
+            display: block;
+            background: var(--error-bg);
+            border-color: var(--error-border);
+            color: var(--error-text);
+        }
+
+        .browser-layout {
+            display: grid;
+            grid-template-columns: 280px minmax(0, 1fr);
+            gap: 14px;
+            align-items: start;
+        }
+
+        .instance-menu {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .menu-button {
+            width: 100%;
+            text-align: left;
+            background: rgba(18, 18, 18, 0.86);
+            padding: 12px;
+            cursor: pointer;
+            border-color: rgba(255, 255, 255, 0.12);
+            box-shadow: none;
+        }
+
+        .menu-button:hover {
+            border-color: rgba(255, 125, 59, 0.46);
+            background: rgba(29, 25, 22, 0.88);
+            transform: translateY(-1px);
+        }
+
+        .menu-button.active {
+            border-color: var(--line-accent);
+            background: rgba(255, 125, 59, 0.16);
+            box-shadow: 0 10px 18px rgba(0, 0, 0, 0.28);
+        }
+
+        .menu-name {
+            color: var(--text-primary);
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .menu-meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 6px;
+        }
+
+        .menu-badge {
+            font-size: 11px;
+            color: var(--text-tertiary);
+            background: rgba(255, 255, 255, 0.05);
+            border: var(--pumpkin-border);
+            border-radius: var(--radius-sm);
+            padding: 3px 7px;
+        }
+
+        .menu-badge.live {
+            color: #cfead9;
+            border-color: rgba(107, 211, 144, 0.36);
+            background: rgba(107, 211, 144, 0.12);
+        }
+
+        .menu-badge.deleted {
+            color: #ffd8d4;
+            border-color: rgba(233, 106, 94, 0.36);
+            background: rgba(233, 106, 94, 0.12);
+        }
+
+        .details-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .details-title {
+            font-size: 22px;
+            font-weight: 600;
+            color: var(--text-primary);
+            line-height: 1.1;
+        }
+
+        .details-sub {
+            color: var(--text-secondary);
+            font-size: 13px;
+            margin-top: 4px;
+            max-width: 680px;
+        }
+
+        .details-pills {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .pill {
+            font-size: 11px;
+            color: var(--text-secondary);
+            background: rgba(255, 255, 255, 0.06);
+            border: var(--pumpkin-border);
+            border-radius: var(--radius-sm);
+            padding: 4px 8px;
+            white-space: nowrap;
+        }
+
+        .pill.live {
+            color: #cfead9;
+            border-color: rgba(107, 211, 144, 0.36);
+            background: rgba(107, 211, 144, 0.12);
+        }
+
+        .pill.deleted {
+            color: #ffd8d4;
+            border-color: rgba(233, 106, 94, 0.36);
+            background: rgba(233, 106, 94, 0.12);
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .summary-card {
+            border: var(--pumpkin-border);
+            border-radius: var(--radius-md);
+            background-color: var(--surface-2);
+            padding: 10px 12px;
+            min-height: 64px;
+        }
+
+        .summary-label {
+            color: var(--text-tertiary);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 5px;
+        }
+
+        .summary-value {
+            color: var(--text-primary);
+            font-size: 15px;
+            font-weight: 600;
+            line-height: 1.2;
+        }
+
+        .summary-sub {
+            color: var(--text-secondary);
+            font-size: 12px;
+            margin-top: 3px;
+        }
+
+        .backup-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .backup-row {
+            border: var(--pumpkin-border);
+            border-radius: var(--radius-md);
+            background-color: var(--surface-1);
+            box-shadow: var(--shadow-sm);
+            padding: 12px;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .backup-main {
+            min-width: 0;
+        }
+
+        .backup-heading {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 6px;
+        }
+
+        .backup-title {
+            color: var(--text-primary);
+            font-size: 14px;
+            font-weight: 600;
+            line-height: 1.2;
+        }
+
+        .backup-age {
+            color: var(--text-secondary);
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        .backup-ref {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 8px;
+        }
+
+        .backup-ref-label {
+            color: var(--text-tertiary);
+            font-size: 11px;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .backup-ref-code {
+            color: var(--text-primary);
+            font-size: 11px;
+            font-family: Menlo, Monaco, Consolas, monospace;
+            background: rgba(255, 255, 255, 0.05);
+            border: var(--pumpkin-border);
+            border-radius: var(--radius-sm);
+            padding: 3px 6px;
+            max-width: 320px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .backup-meta {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .meta-chip {
+            font-size: 11px;
+            color: var(--text-secondary);
+            background: rgba(255, 255, 255, 0.05);
+            border: var(--pumpkin-border);
+            border-radius: var(--radius-sm);
+            padding: 4px 7px;
+        }
+
+        .backup-actions {
+            display: flex;
+            gap: 7px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .empty-state {
+            border: 1px dashed rgba(255, 255, 255, 0.2);
+            border-radius: var(--radius-md);
+            background: rgba(12, 12, 12, 0.42);
+            padding: 16px;
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+
+        @media (max-width: 1140px) {
+            .summary-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .backup-row {
+                grid-template-columns: 1fr;
+            }
+
+            .backup-actions {
+                justify-content: flex-start;
+            }
+        }
+
+        @media (max-width: 980px) {
+            .create-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .browser-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <div class="flex min-h-screen">
+        <div class="w-56 flex flex-col flex-shrink-0" style="border-right: var(--pumpkin-border); background-color: var(--bg-base);">
+            <a href="/" class="block px-5 py-5" style="border-bottom: var(--pumpkin-border);">
+                <img src="/assets/transparent_logo.png" alt="Minara" style="display: block; width: 100%; max-width: 170px; height: auto; margin: 0 auto;" />
+            </a>
+            <nav class="p-3 flex flex-col gap-1 flex-1">
+                <a href="/" class="flex items-center gap-2.5 px-3 py-2.5 rounded-sm text-sm font-medium transition-colors"
+                   style="color: var(--text-subtle);">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+                    </svg>
+                    My Instances
+                </a>
+                <a href="/device" class="flex items-center gap-2.5 px-3 py-2.5 rounded-sm text-sm font-medium transition-colors"
+                   style="color: var(--text-subtle);">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="5" y="2" width="14" height="20" rx="2"/><circle cx="12" cy="17" r="1" fill="currentColor" stroke="none"/>
+                    </svg>
+                    Device Info
+                </a>
+                <a href="/backups" class="flex items-center gap-2.5 px-3 py-2.5 rounded-sm text-sm font-medium transition-colors"
+                   style="background-color: var(--accent-soft-strong); color: var(--text-primary); border-color: var(--line-accent);">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="4" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="12" y1="14" x2="12" y2="18"/>
+                    </svg>
+                    Backups
+                </a>
+            </nav>
+        </div>
+
+        <div class="flex-1 flex flex-col p-8 lg:p-10">
+            <div class="w-full max-w-7xl mx-auto">
+                <h2 class="text-3xl font-600 mb-2" style="color: var(--text-strong);">Backups</h2>
+                <p class="text-sm mb-8" style="color: var(--text-soft);">
+                    Backups are grouped per source instance. Restore as new always works even if the original instance was deleted.
+                </p>
+
+                <section class="panel create-panel p-6 mb-6">
+                    <h3 class="text-lg font-600 mb-4" style="color: var(--text-strong);">Create Backup</h3>
+                    <div class="create-grid" style="display:grid; grid-template-columns: 1fr auto; gap: 12px; align-items: end;">
+                        <div>
+                            <label for="instanceSelect" class="block text-xs font-medium mb-2" style="color: var(--text-muted); letter-spacing: 0.08em; text-transform: uppercase;">
+                                Existing Instance
+                            </label>
+                            <select id="instanceSelect" class="select"></select>
+                        </div>
+                        <button id="createBackupBtn" class="btn">Create Backup</button>
+                    </div>
+                    <div id="statusMessage" class="status"></div>
+                </section>
+
+                <section class="panel browser-panel p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-600" style="color: var(--text-strong);">Backup Browser</h3>
+                        <button id="refreshBtn" class="btn-muted">Refresh</button>
+                    </div>
+
+                    <div class="browser-layout">
+                        <aside>
+                            <p class="text-xs font-medium mb-2" style="color: var(--text-muted); letter-spacing: 0.08em; text-transform: uppercase;">
+                                Instance Submenu
+                            </p>
+                            <div id="instanceMenu" class="instance-menu"></div>
+                        </aside>
+
+                        <div>
+                            <div class="details-header">
+                                <div>
+                                    <div id="detailsTitle" class="details-title">Backups</div>
+                                    <div id="detailsSub" class="details-sub">Select an instance group to manage its backups.</div>
+                                </div>
+                                <div id="detailsPills" class="details-pills"></div>
+                            </div>
+
+                            <div id="detailsSummary" class="summary-grid"></div>
+                            <div id="backupDetails"></div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const instanceSelect = document.getElementById('instanceSelect');
+        const createBackupBtn = document.getElementById('createBackupBtn');
+        const refreshBtn = document.getElementById('refreshBtn');
+        const instanceMenu = document.getElementById('instanceMenu');
+        const backupDetails = document.getElementById('backupDetails');
+        const detailsTitle = document.getElementById('detailsTitle');
+        const detailsSub = document.getElementById('detailsSub');
+        const detailsPills = document.getElementById('detailsPills');
+        const detailsSummary = document.getElementById('detailsSummary');
+        const statusMessage = document.getElementById('statusMessage');
+
+        let liveInstances = [];
+        let backups = [];
+        let selectedSource = null;
+
+        function setStatus(message, type = 'success') {
+            statusMessage.className = `status ${type}`;
+            statusMessage.textContent = message;
+        }
+
+        function clearStatus() {
+            statusMessage.className = 'status';
+            statusMessage.textContent = '';
+        }
+
+        function escapeHtml(value) {
+            return String(value)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function formatBytes(bytes) {
+            if (!bytes || bytes <= 0) return '0 B';
+            const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+            let value = bytes;
+            let unit = 0;
+            while (value >= 1024 && unit < units.length - 1) {
+                value /= 1024;
+                unit += 1;
+            }
+            return `${value.toFixed(unit === 0 ? 0 : 2)} ${units[unit]}`;
+        }
+
+        function formatDate(unixTs) {
+            if (!unixTs) return '-';
+            const date = new Date(unixTs * 1000);
+            return date.toLocaleString();
+        }
+
+        function formatRelativeTime(unixTs) {
+            if (!unixTs) return 'unknown age';
+
+            const now = Math.floor(Date.now() / 1000);
+            const diff = Math.max(0, now - unixTs);
+
+            if (diff < 30) return 'just now';
+            if (diff < 60) return `${diff}s ago`;
+            if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+            if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+            return `${Math.floor(diff / 86400)}d ago`;
+        }
+
+        function formatShortId(id) {
+            const text = String(id || '');
+            if (text.length <= 22) return text;
+            return `${text.slice(0, 10)}...${text.slice(-8)}`;
+        }
+
+        function groupBackupsBySource(items) {
+            return items.reduce((acc, item) => {
+                if (!acc[item.source_instance]) {
+                    acc[item.source_instance] = [];
+                }
+                acc[item.source_instance].push(item);
+                return acc;
+            }, {});
+        }
+
+        function sourceIsLive(name) {
+            return liveInstances.includes(name);
+        }
+
+        async function loadInstances() {
+            const response = await fetch('/api/instances');
+            const data = await response.json();
+
+            if (!Array.isArray(data)) {
+                liveInstances = [];
+                instanceSelect.innerHTML = '<option value="">No instances found</option>';
+                createBackupBtn.disabled = true;
+                return;
+            }
+
+            liveInstances = data;
+
+            if (liveInstances.length === 0) {
+                instanceSelect.innerHTML = '<option value="">No instances found</option>';
+                createBackupBtn.disabled = true;
+                return;
+            }
+
+            instanceSelect.innerHTML = liveInstances
+                .map(name => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`)
+                .join('');
+            createBackupBtn.disabled = false;
+        }
+
+        async function loadBackups() {
+            const response = await fetch('/api/backups');
+            const data = await response.json();
+
+            if (data.status !== 'success') {
+                backups = [];
+                setStatus(data.message || 'Failed to load backups.', 'error');
+                return;
+            }
+
+            backups = Array.isArray(data.backups) ? data.backups : [];
+        }
+
+        function renderEmptyBrowser() {
+            selectedSource = null;
+            instanceMenu.innerHTML = '<div class="empty-state">No backup groups available yet.</div>';
+            detailsTitle.textContent = 'No backups yet';
+            detailsSub.textContent = 'Create your first backup from an existing instance to start managing restore points.';
+            detailsPills.innerHTML = '';
+            detailsSummary.innerHTML = `
+                <div class="summary-card">
+                    <div class="summary-label">Snapshots</div>
+                    <div class="summary-value">0</div>
+                    <div class="summary-sub">No backups created yet.</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-label">Total Size</div>
+                    <div class="summary-value">0 B</div>
+                    <div class="summary-sub">Disk usage will appear here.</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-label">Restore Policy</div>
+                    <div class="summary-value">Restore as New / Override Original</div>
+                    <div class="summary-sub">Override is restricted to the source instance.</div>
+                </div>
+            `;
+            backupDetails.innerHTML = '<div class="empty-state">Nothing to restore or delete yet.</div>';
+        }
+
+        function renderBrowser() {
+            const grouped = groupBackupsBySource(backups);
+            const sources = Object.keys(grouped).sort((a, b) => a.localeCompare(b));
+
+            if (sources.length === 0) {
+                renderEmptyBrowser();
+                return;
+            }
+
+            if (!selectedSource || !grouped[selectedSource]) {
+                selectedSource = sources[0];
+            }
+
+            instanceMenu.innerHTML = sources.map(source => {
+                const count = grouped[source].length;
+                const activeClass = source === selectedSource ? 'active' : '';
+                const live = sourceIsLive(source);
+                const liveBadge = live
+                    ? '<span class="menu-badge live">source active</span>'
+                    : '<span class="menu-badge deleted">source removed</span>';
+
+                return `
+                    <button class="menu-button ${activeClass}" data-source="${escapeHtml(source)}">
+                        <div class="menu-name">${escapeHtml(source)}</div>
+                        <div class="menu-meta">
+                            <span class="menu-badge">${count} backup(s)</span>
+                            ${liveBadge}
+                        </div>
+                    </button>
+                `;
+            }).join('');
+
+            const items = grouped[selectedSource].slice().sort((a, b) => b.created_at_unix - a.created_at_unix);
+            const selectedLive = sourceIsLive(selectedSource);
+            const totalBytes = items.reduce((acc, item) => acc + (item.size_bytes || 0), 0);
+            const latestBackup = items[0];
+            const latestLabel = latestBackup ? formatDate(latestBackup.created_at_unix) : '-';
+
+            detailsTitle.textContent = selectedSource;
+            detailsSub.textContent = selectedLive
+                ? 'Restore as New creates a separate instance. Override Original restores to the same instance identity.'
+                : 'Source name is not present. If it was renamed, identity-based override can still work.';
+
+            detailsPills.innerHTML = `
+                <span class="pill">${items.length} backup(s)</span>
+                <span class="pill ${selectedLive ? 'live' : 'deleted'}">${selectedLive ? 'source name exists' : 'source name missing'}</span>
+            `;
+
+            detailsSummary.innerHTML = `
+                <div class="summary-card">
+                    <div class="summary-label">Snapshots</div>
+                    <div class="summary-value">${items.length}</div>
+                    <div class="summary-sub">Grouped under ${escapeHtml(selectedSource)}.</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-label">Total Size</div>
+                    <div class="summary-value">${formatBytes(totalBytes)}</div>
+                    <div class="summary-sub">Combined storage for this group.</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-label">Latest Snapshot</div>
+                    <div class="summary-value">${escapeHtml(latestLabel)}</div>
+                    <div class="summary-sub">Most recent backup timestamp.</div>
+                </div>
+            `;
+
+            backupDetails.innerHTML = `
+                <div class="backup-list">
+                    ${items.map(item => {
+                        const overrideLabel = 'Override Original';
+                        const createdText = formatDate(item.created_at_unix);
+                        const relativeText = formatRelativeTime(item.created_at_unix);
+                        const shortId = formatShortId(item.id);
+
+                        return `
+                            <article class="backup-row">
+                                <div class="backup-main">
+                                    <div class="backup-heading">
+                                        <div class="backup-title">Snapshot created ${escapeHtml(createdText)}</div>
+                                        <div class="backup-age">${escapeHtml(relativeText)}</div>
+                                    </div>
+
+                                    <div class="backup-ref">
+                                        <span class="backup-ref-label">Backup Ref</span>
+                                        <span class="backup-ref-code" title="${escapeHtml(item.id)}">${escapeHtml(shortId)}</span>
+                                    </div>
+
+                                    <div class="backup-meta">
+                                        <span class="meta-chip">Size: ${formatBytes(item.size_bytes)}</span>
+                                        <span class="meta-chip">Files: ${item.file_count || 0}</span>
+                                        <span class="meta-chip">Override target: source identity only</span>
+                                    </div>
+                                </div>
+
+                                <div class="backup-actions">
+                                    <button class="btn-muted" data-action="restore-new" data-id="${escapeHtml(item.id)}" data-source="${escapeHtml(item.source_instance)}">Restore as New</button>
+                                    <button class="btn-muted" data-action="override" data-id="${escapeHtml(item.id)}" data-source="${escapeHtml(item.source_instance)}">${overrideLabel}</button>
+                                    <button class="btn-danger" data-action="delete" data-id="${escapeHtml(item.id)}">Delete Backup</button>
+                                </div>
+                            </article>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+        }
+
+        async function refreshAll() {
+            await loadInstances();
+            await loadBackups();
+            renderBrowser();
+        }
+
+        async function createBackup() {
+            clearStatus();
+            const instanceName = instanceSelect.value;
+
+            if (!instanceName) {
+                setStatus('Select an existing instance first.', 'error');
+                return;
+            }
+
+            createBackupBtn.disabled = true;
+            createBackupBtn.textContent = 'Creating...';
+
+            try {
+                const response = await fetch('/api/backups', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ instance_name: instanceName })
+                });
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    setStatus(data.message || 'Backup created successfully.', 'success');
+                    await refreshAll();
+                    selectedSource = instanceName;
+                    renderBrowser();
+                } else {
+                    setStatus(data.message || 'Failed to create backup.', 'error');
+                }
+            } catch (error) {
+                setStatus(`Request failed: ${error.message}`, 'error');
+            } finally {
+                createBackupBtn.disabled = false;
+                createBackupBtn.textContent = 'Create Backup';
+            }
+        }
+
+        async function restoreAsNew(backupId, sourceInstance) {
+            const suggestedName = sourceInstance;
+            const input = prompt('New instance name for restore:', suggestedName);
+            if (input === null) return;
+
+            const newName = input.trim();
+            if (!newName) {
+                setStatus('New instance name cannot be empty.', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/backups/${encodeURIComponent(backupId)}/restore`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ mode: 'new', new_instance_name: newName })
+                });
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    setStatus(data.message || 'Backup restored as new instance.', 'success');
+                    await refreshAll();
+                } else {
+                    setStatus(data.message || 'Restore failed.', 'error');
+                }
+            } catch (error) {
+                setStatus(`Request failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function overrideOriginal(backupId, sourceInstance) {
+            const confirmed = confirm(`Override the original instance identity for "${sourceInstance}" with this backup? This replaces current files.`);
+            if (!confirmed) return;
+
+            try {
+                const response = await fetch(`/api/backups/${encodeURIComponent(backupId)}/restore`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ mode: 'override' })
+                });
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    setStatus(data.message || 'Instance overridden.', 'success');
+                    await refreshAll();
+                } else {
+                    setStatus(data.message || 'Override failed.', 'error');
+                }
+            } catch (error) {
+                setStatus(`Request failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function deleteBackup(backupId) {
+            const confirmed = confirm('Delete this backup permanently?');
+            if (!confirmed) return;
+
+            try {
+                const response = await fetch(`/api/backups/${encodeURIComponent(backupId)}`, {
+                    method: 'DELETE'
+                });
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    setStatus(data.message || 'Backup deleted.', 'success');
+                    await refreshAll();
+                } else {
+                    setStatus(data.message || 'Delete failed.', 'error');
+                }
+            } catch (error) {
+                setStatus(`Request failed: ${error.message}`, 'error');
+            }
+        }
+
+        instanceMenu.addEventListener('click', (event) => {
+            const button = event.target.closest('button[data-source]');
+            if (!button) return;
+            selectedSource = button.dataset.source;
+            renderBrowser();
+        });
+
+        backupDetails.addEventListener('click', async (event) => {
+            const button = event.target.closest('button[data-action]');
+            if (!button) return;
+
+            const action = button.dataset.action;
+            const backupId = button.dataset.id;
+            const source = button.dataset.source;
+
+            if (!action || !backupId) return;
+
+            if (action === 'restore-new') {
+                await restoreAsNew(backupId, source);
+                return;
+            }
+
+            if (action === 'override') {
+                await overrideOriginal(backupId, source);
+                return;
+            }
+
+            if (action === 'delete') {
+                await deleteBackup(backupId);
+            }
+        });
+
+        createBackupBtn.addEventListener('click', createBackup);
+        refreshBtn.addEventListener('click', async () => {
+            clearStatus();
+            await refreshAll();
+        });
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                await refreshAll();
+            } catch (error) {
+                setStatus(`Initialization failed: ${error.message}`, 'error');
+            }
+        });
+    </script>
+</body>
+</html>

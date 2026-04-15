@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Device Info - Minara</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap');
+        :root {
+            --surface-0: #0d0d0d;
+            --surface-1: #151515;
+            --surface-2: #1d1d1d;
+            --surface-3: #252525;
+
+            --text-primary: #f2f2f2;
+            --text-secondary: #b7b7b7;
+            --text-tertiary: #8d8d8d;
+
+            --accent: #ff7d3b;
+            --accent-hover: #ff965f;
+            --accent-soft: rgba(255, 125, 59, 0.16);
+            --accent-soft-strong: rgba(255, 125, 59, 0.28);
+
+            --line-subtle: rgba(255, 255, 255, 0.12);
+            --line-accent: rgba(255, 125, 59, 0.64);
+            --line-danger: rgba(255, 71, 87, 0.65);
+
+            --shadow-sm: 0 6px 18px rgba(0, 0, 0, 0.3);
+            --shadow-md: 0 12px 30px rgba(0, 0, 0, 0.38);
+            --shadow-hover: 0 16px 34px rgba(0, 0, 0, 0.45);
+            --focus-ring: 0 0 0 3px rgba(255, 125, 59, 0.28);
+
+            --radius-sm: 5px;
+            --radius-md: 5px;
+
+            --bar-track: #242424;
+            --bar-fill: #ff8a4d;
+            --ok: #ff8a4d;
+            --warn: #f2b555;
+            --crit: #e96a5e;
+            --ok-soft: #ff9a63;
+            --warn-soft: #f6c979;
+            --crit-soft: #ef8479;
+
+            --status-live: #ff9a63;
+            --status-offline: #8d8d8d;
+            --status-offline-dot: #4a4a4a;
+            --error-bg: rgba(233, 106, 94, 0.15);
+            --error-border: rgba(233, 106, 94, 0.58);
+            --error-text: #ffd9d4;
+
+            /* legacy aliases used across inline styles and scripts */
+            --bg-base: var(--surface-0);
+            --bg-panel: var(--surface-1);
+            --bg-elev: var(--surface-2);
+            --border-soft: var(--line-subtle);
+            --border-strong: var(--line-accent);
+            --text-hero: var(--text-primary);
+            --text-strong: var(--text-primary);
+            --text-main: var(--text-primary);
+            --text-console: #e7e7e7;
+            --text-soft: var(--text-secondary);
+            --text-muted: var(--text-secondary);
+            --text-dim: var(--text-tertiary);
+            --text-subtle: var(--text-tertiary);
+            --text-faint: #7a7a7a;
+            --pumpkin-black: #0f0f0f;
+            --pumpkin-white: #ffffff;
+            --pumpkin-blue: #4169e1;
+            --pumpkin-green: #00c853;
+            --pumpkin-purple: #9b59b6;
+            --pumpkin-pink: #ff69b4;
+            --pumpkin-yellow: #ffd93d;
+            --pumpkin-red: #ff4757;
+            --pumpkin-border: 1px solid var(--line-subtle);
+            --pumpkin-border-white: 1px solid rgba(255, 255, 255, 0.25);
+            --pumpkin-shadow: var(--shadow-sm);
+            --pumpkin-shadow-lg: var(--shadow-md);
+            --pumpkin-shadow-hover: var(--shadow-hover);
+        }
+        * { box-sizing: border-box; }
+        html,
+        body,
+        button,
+        input,
+        select,
+        textarea {
+            font-family: 'Manrope', sans-serif;
+        }
+        body {
+            background:
+                radial-gradient(1200px 520px at -10% -18%, rgba(255, 125, 59, 0.14), transparent 64%),
+                radial-gradient(980px 460px at 112% -24%, rgba(255, 125, 59, 0.08), transparent 68%),
+                var(--bg-base);
+            color: var(--text-strong);
+        }
+        body { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+        .rounded-none,
+        .rounded-sm,
+        .rounded-md {
+            border-radius: var(--radius-sm) !important;
+        }
+        nav a {
+            border: 1px solid var(--line-subtle);
+            border-radius: var(--radius-sm);
+            transition: border-color 0.16s ease, background 0.16s ease, box-shadow 0.16s ease, color 0.16s ease, transform 0.16s ease;
+        }
+        nav a:hover {
+            transform: translateY(-1px);
+            border-color: var(--line-accent);
+            background: var(--accent-soft);
+            box-shadow: var(--shadow-sm);
+            color: var(--text-hero) !important;
+        }
+        #apiHost,
+        #connectBtn {
+            border: var(--pumpkin-border) !important;
+            border-radius: var(--radius-sm);
+            box-shadow: none;
+        }
+        #connectBtn:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-sm);
+            background: var(--accent-hover);
+            color: var(--pumpkin-black);
+        }
+        #connectBtn:active {
+            transform: translateY(0);
+            box-shadow: none;
+        }
+
+        /* ---- Bars ---- */
+        .bar-track { background-color: var(--bar-track); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 999px; overflow: hidden; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04); }
+        .bar-h-sm  { height: 6px; }
+        .bar-h-md  { height: 9px; }
+        .bar-fill  { height: 100%; border-radius: 999px; transition: width 0.7s cubic-bezier(0.4,0,0.2,1); }
+        .bar-ok    { background-color: var(--ok); }
+        .bar-warn  { background-color: var(--warn); }
+        .bar-crit  { background-color: var(--crit); }
+
+        /* ---- Cards ---- */
+        .card { background-color: var(--surface-1); border: 1px solid var(--line-subtle); box-shadow: var(--pumpkin-shadow); border-radius: var(--radius-md); }
+
+        /* ---- Labels / values ---- */
+        .lbl  { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-dim); }
+        .val  { font-size: 28px; font-weight: 700; color: var(--text-main); line-height: 1; }
+        .val-sm { font-size: 14px; font-weight: 500; color: var(--text-soft); }
+        .dim  { color: var(--text-secondary); font-size: 13px; }
+
+        /* ---- Divider ---- */
+        .hdiv { border-bottom: var(--pumpkin-border); }
+
+        /* ---- Section title ---- */
+        .stitle { font-size: 11px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; color: var(--text-faint); margin-bottom: 14px; }
+
+        /* ---- Top bar typography ---- */
+        .topbar-title {
+            font-family: 'Manrope', sans-serif;
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--text-main);
+            line-height: 1.2;
+        }
+
+        .topbar-subtitle {
+            font-family: 'Manrope', sans-serif;
+            font-size: 13px;
+            font-weight: 400;
+            color: var(--text-muted);
+            margin-top: 2px;
+            line-height: 1.35;
+        }
+
+        .topbar-status {
+            font-family: 'Manrope', sans-serif;
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--text-faint);
+        }
+
+        /* ---- Animations ---- */
+        .pulse { animation: pulse 2.5s ease-in-out infinite; }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+        .spinner { border: 1.5px solid var(--line-subtle); border-top-color: var(--accent); border-radius: 50%; width: 20px; height: 20px; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes fadeUp { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
+        .fade-up { animation: fadeUp 0.3s ease both; }
+
+        /* ---- IP modal ---- */
+        .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 50; }
+        input:focus { outline: none; border-color: var(--line-accent) !important; box-shadow: var(--focus-ring); }
+    </style>
+</head>
+<body data-device-host-editable="{{ allow_device_host_edit }}" data-device-host="{{ default_device_host }}">
+<div class="flex min-h-screen">
+
+    <!-- Sidebar -->
+        <div class="w-56 flex flex-col flex-shrink-0" style="border-right: var(--pumpkin-border); background-color: var(--bg-base);">
+            <a href="/" class="block px-5 py-5" style="border-bottom: var(--pumpkin-border);">
+                <img src="/assets/transparent_logo.png" alt="Minara" style="display: block; width: 100%; max-width: 170px; height: auto; margin: 0 auto;" />
+            </a>
+            <nav class="p-3 flex flex-col gap-1 flex-1">
+                     <a href="/" class="flex items-center gap-2.5 px-3 py-2.5 rounded-sm text-sm font-medium transition-colors"
+                   style="color: var(--text-subtle);">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+                    </svg>
+                    My Instances
+                </a>
+                                         <a href="/device" class="flex items-center gap-2.5 px-3 py-2.5 rounded-sm text-sm font-medium transition-colors"
+                                     style="background-color: var(--accent-soft-strong); color: var(--text-primary); border-color: var(--line-accent);">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="5" y="2" width="14" height="20" rx="2"/><circle cx="12" cy="17" r="1" fill="currentColor" stroke="none"/>
+                    </svg>
+                    Device Info
+                </a>
+                                        <a href="/backups" class="flex items-center gap-2.5 px-3 py-2.5 rounded-sm text-sm font-medium transition-colors"
+                                           style="color: var(--text-subtle);">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <rect x="3" y="4" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="12" y1="14" x2="12" y2="18"/>
+                                            </svg>
+                                            Backups
+                                        </a>
+            </nav>
+            {% if allow_device_host_edit %}
+            <div class="p-3" style="border-top: var(--pumpkin-border);">
+                <p class="text-xs mb-1.5" style="color: var(--text-muted); letter-spacing: 0.5px; text-transform: uppercase;">Device API Host</p>
+                <input id="apiHost" type="text" placeholder="192.168.x.x:3000"
+                       class="w-full rounded-sm text-xs px-3 py-2 outline-none"
+                       style="background-color: var(--bg-elev); border: var(--pumpkin-border); color: var(--text-strong);" />
+                <button id="connectBtn"
+                    class="w-full mt-1.5 rounded-sm text-xs py-2 font-medium"
+                        style="background-color: var(--accent); border: 1px solid var(--line-accent); color: var(--pumpkin-black); cursor: pointer;">
+                    Connect
+                </button>
+            </div>
+            {% else %}
+            <div class="p-3" style="border-top: var(--pumpkin-border);">
+                <p class="text-xs mb-1.5" style="color: var(--text-muted); letter-spacing: 0.5px; text-transform: uppercase;">Monitoring Source</p>
+                <div class="w-full rounded-sm text-xs px-3 py-2"
+                     style="background-color: var(--bg-elev); border: var(--pumpkin-border); color: var(--text-strong);">
+                    {{ default_device_host }} (locked)
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="p-3" style="border-top: var(--pumpkin-border);">
+                <p class="text-xs mb-1.5" style="color: var(--text-muted); letter-spacing: 0.5px; text-transform: uppercase;">Asmo Required</p>
+                <p class="text-xs" style="color: var(--text-faint); line-height: 1.45;">
+                    Set up and run Asmo before using Device Info monitoring.
+                </p>
+                <a href="https://github.com/theonuverse/asmo" target="_blank" rel="noopener noreferrer"
+                   class="block w-full mt-2 rounded-sm text-xs py-2 px-3 text-center font-medium transition-colors"
+                   style="background: var(--surface-2); border: var(--pumpkin-border); color: var(--text-soft);">
+                    Open Asmo Setup
+                </a>
+
+                {% if allow_device_host_edit %}
+                <label class="block mt-2 text-xs" style="color: var(--text-faint); line-height: 1.4; cursor: pointer;">
+                    <input id="asmoReady" type="checkbox" style="margin-right: 6px; vertical-align: middle;" />
+                    I installed and started Asmo
+                </label>
+                {% endif %}
+            </div>
+        </div>
+
+    <!-- Main -->
+    <div class="flex-1 flex flex-col overflow-y-auto">
+
+        <!-- Top bar -->
+        <div class="hdiv flex items-center justify-between" style="padding: 16px 36px; position:sticky; top:0; background:var(--bg-base); z-index:10; flex-shrink:0;">
+            <div>
+                <div id="deviceTitle" class="topbar-title">Device Information</div>
+                <div id="deviceSubtitle" class="topbar-subtitle">Not connected</div>
+            </div>
+            <div class="flex items-center gap-2">
+                <span id="liveIndicator" class="pulse" style="width:6px; height:6px; border-radius:50%; background:var(--status-offline-dot); display:inline-block;"></span>
+                <span id="liveLabel" class="topbar-status">Offline</span>
+            </div>
+        </div>
+
+        <!-- Loading -->
+        <div id="loadingState" class="flex-1 flex flex-col items-center justify-center" style="gap:12px; min-height:400px;">
+            <div class="spinner"></div>
+            {% if allow_device_host_edit %}
+            <div style="font-size:12px; color:var(--text-faint);">Enter device API host in the sidebar</div>
+            {% else %}
+            <div style="font-size:12px; color:var(--text-faint);">Connecting to {{ default_device_host }}</div>
+            {% endif %}
+        </div>
+
+        <!-- Error -->
+        <div id="errorState" class="flex-1 flex-col items-center justify-center" style="display:none; gap:8px; min-height:400px;">
+            <div style="font-size:13px; color:var(--error-text);">Could not reach device</div>
+            <div id="errorDetail" style="font-size:11px; color:var(--text-faint); text-align:center; max-width:280px;"></div>
+        </div>
+
+        <!-- Stats -->
+        <div id="statsContent" style="display:none; padding:32px 36px;" class="fade-up">
+
+            <!-- Row 1: Total CPU + Battery + Uptime + Storage (full width, 4 cols) -->
+            <div style="display:grid; grid-template-columns: 2fr 1.5fr 1fr 1fr; gap:16px; margin-bottom:16px;">
+
+                <!-- Total CPU -->
+                <div class="card" style="padding:24px 28px;">
+                    <div class="lbl" style="margin-bottom:10px;">CPU Usage</div>
+                    <div class="flex items-baseline gap-2" style="margin-bottom:10px;">
+                        <span class="val" id="s-cpu-total">—</span>
+                        <span class="val-sm">avg across all cores</span>
+                    </div>
+                    <div class="bar-track bar-h-md" style="margin-bottom:10px;">
+                        <div class="bar-fill bar-ok" id="bar-cpu-total" style="width:0%"></div>
+                    </div>
+                    <!-- Mini core bars -->
+                    <div id="miniCores" style="display:grid; grid-template-columns:repeat(8,1fr); gap:3px; margin-top:4px;"></div>
+                </div>
+
+                <!-- Battery -->
+                <div class="card" style="padding:24px 28px;">
+                    <div class="lbl" style="margin-bottom:10px;">Battery</div>
+                    <div class="flex items-baseline gap-2" style="margin-bottom:10px;">
+                        <span class="val" id="s-battery-pct">—</span>
+                        <span class="val-sm" id="s-battery-status">—</span>
+                    </div>
+                    <div class="bar-track bar-h-md" style="margin-bottom:8px;">
+                        <div class="bar-fill" id="bar-battery" style="width:0%"></div>
+                    </div>
+                    <div style="display:flex; justify-content:space-between;">
+                        <span class="dim" id="s-battery-temp">—</span>
+                        <span class="dim" id="s-screen">—</span>
+                    </div>
+                </div>
+
+                <!-- Uptime -->
+                <div class="card" style="padding:24px 28px;">
+                    <div class="lbl" style="margin-bottom:10px;">Uptime</div>
+                    <div class="val" id="s-uptime" style="font-size:26px; line-height:1.3;">—</div>
+                    <div class="dim" style="margin-top:6px;" id="s-refresh">—</div>
+                </div>
+
+                <!-- Device -->
+                <div class="card" style="padding:24px 28px;">
+                    <div class="lbl" style="margin-bottom:10px;">Device</div>
+                    <div style="font-size:16px; font-weight:600; color:var(--text-main); margin-bottom:4px;" id="s-device-short">—</div>
+                    <div class="dim" id="s-soc-short">—</div>
+                    <div class="dim" style="margin-top:3px;" id="s-android-short">—</div>
+                </div>
+            </div>
+
+            <!-- Row 2: RAM + Swap + Thermals (3 cols) -->
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; margin-bottom:16px;">
+
+                <!-- RAM -->
+                <div class="card" style="padding:24px 28px;">
+                    <div class="lbl" style="margin-bottom:10px;">RAM</div>
+                    <div class="flex items-baseline gap-2" style="margin-bottom:10px;">
+                        <span class="val" id="s-ram-used">—</span>
+                        <span class="val-sm" id="s-ram-total">—</span>
+                    </div>
+                    <div class="bar-track bar-h-md" style="margin-bottom:6px;">
+                        <div class="bar-fill bar-ok" id="bar-ram" style="width:0%"></div>
+                    </div>
+                    <div class="dim" id="s-ram-pct">—</div>
+                </div>
+
+                <!-- Swap -->
+                <div class="card" style="padding:24px 28px;">
+                    <div class="lbl" style="margin-bottom:10px;">Swap</div>
+                    <div class="flex items-baseline gap-2" style="margin-bottom:10px;">
+                        <span class="val" id="s-swap-used">—</span>
+                        <span class="val-sm" id="s-swap-total">—</span>
+                    </div>
+                    <div class="bar-track bar-h-md" style="margin-bottom:6px;">
+                        <div class="bar-fill bar-ok" id="bar-swap" style="width:0%"></div>
+                    </div>
+                    <div class="dim" id="s-swap-pct">—</div>
+                </div>
+
+                <!-- Thermals -->
+                <div class="card" style="padding:24px 28px;">
+                    <div class="lbl" style="margin-bottom:16px;">Thermals</div>
+                    <div style="display:flex; flex-direction:column; gap:14px;">
+                        <div>
+                            <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                                <span class="dim">CPU</span>
+                                <span style="font-size:15px; font-weight:600; color:var(--text-main);" id="s-cpu-temp">—</span>
+                            </div>
+                            <div class="bar-track bar-h-sm"><div class="bar-fill" id="bar-cpu-temp" style="width:0%"></div></div>
+                        </div>
+                        <div>
+                            <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                                <span class="dim">GPU</span>
+                                <span style="font-size:15px; font-weight:600; color:var(--text-main);" id="s-gpu-temp">—</span>
+                            </div>
+                            <div class="bar-track bar-h-sm"><div class="bar-fill" id="bar-gpu-temp" style="width:0%"></div></div>
+                        </div>
+                        <div>
+                            <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                                <span class="dim">GPU Load</span>
+                                <span style="font-size:15px; font-weight:600; color:var(--text-main);" id="s-gpu-load">—</span>
+                            </div>
+                            <div class="bar-track bar-h-sm"><div class="bar-fill bar-ok" id="bar-gpu-load" style="width:0%"></div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Row 3: Storage (full width) -->
+            <div class="card" style="padding:24px 28px; margin-bottom:16px;">
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+                    <div class="lbl">Storage</div>
+                    <div class="dim" id="s-storage-detail">—</div>
+                </div>
+                <div class="bar-track bar-h-md" style="margin-bottom:6px;">
+                    <div class="bar-fill bar-ok" id="bar-storage" style="width:0%"></div>
+                </div>
+                <div style="display:flex; justify-content:space-between;">
+                    <span class="dim" id="s-storage-used">—</span>
+                    <span class="dim" id="s-storage-free">—</span>
+                </div>
+            </div>
+
+            <!-- Row 4: CPU Cores -->
+            <div>
+                <div class="lbl" style="margin-bottom:14px;">CPU Cores</div>
+                <div id="coresGrid" style="display:grid; grid-template-columns:repeat(4,1fr); gap:12px;"></div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    const API_HOST_KEY = 'minara_device_api_host';
+    const ASMO_READY_KEY = 'minara_asmo_ready';
+    const DEVICE_HOST_EDITABLE = document.body.dataset.deviceHostEditable === 'true';
+    const DEFAULT_DEVICE_HOST = (document.body.dataset.deviceHost || 'localhost:3000').trim();
+    const apiHostInput = document.getElementById('apiHost');
+    const connectBtn   = document.getElementById('connectBtn');
+    const asmoReady    = document.getElementById('asmoReady');
+    let pollInterval   = null;
+    let activeHost     = DEFAULT_DEVICE_HOST;
+
+    function asmoGuidance(extra) {
+        const suffix = extra ? ` | ${extra}` : '';
+        return `Set up and run Asmo first: https://github.com/theonuverse/asmo${suffix}`;
+    }
+
+    function applyConnectAvailability() {
+        if (!connectBtn || !DEVICE_HOST_EDITABLE) return;
+        const ready = asmoReady ? asmoReady.checked : true;
+        connectBtn.disabled = !ready;
+        connectBtn.style.opacity = ready ? '1' : '0.55';
+        connectBtn.style.cursor = ready ? 'pointer' : 'not-allowed';
+    }
+
+    if (DEVICE_HOST_EDITABLE) {
+        const saved = localStorage.getItem(API_HOST_KEY);
+        if (saved && apiHostInput) {
+            apiHostInput.value = saved;
+            activeHost = saved.trim();
+        } else if (apiHostInput) {
+            apiHostInput.value = DEFAULT_DEVICE_HOST;
+        }
+
+        if (asmoReady) {
+            asmoReady.checked = localStorage.getItem(ASMO_READY_KEY) === '1';
+            asmoReady.addEventListener('change', () => {
+                localStorage.setItem(ASMO_READY_KEY, asmoReady.checked ? '1' : '0');
+                applyConnectAvailability();
+            });
+        }
+    } else if (apiHostInput) {
+        apiHostInput.value = DEFAULT_DEVICE_HOST;
+    }
+
+    applyConnectAvailability();
+
+    function startPolling() {
+        if (DEVICE_HOST_EDITABLE && asmoReady && !asmoReady.checked) {
+            showError(asmoGuidance('Confirm Asmo setup in the sidebar first.'));
+            return;
+        }
+
+        const host = DEVICE_HOST_EDITABLE
+            ? (apiHostInput?.value || '').trim()
+            : DEFAULT_DEVICE_HOST;
+
+        if (!host) return;
+        activeHost = host;
+
+        if (DEVICE_HOST_EDITABLE) {
+            localStorage.setItem(API_HOST_KEY, host);
+        }
+
+        if (pollInterval) clearInterval(pollInterval);
+        document.getElementById('loadingState').style.display = 'flex';
+        document.getElementById('errorState').style.display   = 'none';
+        document.getElementById('statsContent').style.display = 'none';
+        fetchStats();
+        pollInterval = setInterval(fetchStats, 3000);
+    }
+
+    if (connectBtn && DEVICE_HOST_EDITABLE) {
+        connectBtn.addEventListener('click', startPolling);
+    }
+
+    if (apiHostInput && DEVICE_HOST_EDITABLE) {
+        apiHostInput.addEventListener('keydown', e => { if (e.key === 'Enter') startPolling(); });
+    }
+
+    if (DEVICE_HOST_EDITABLE) {
+        const initialHost = (apiHostInput?.value || '').trim();
+        if (initialHost) startPolling();
+    } else {
+        startPolling();
+    }
+
+    // ---- Helpers ----
+    function gb(mb)     { return (mb / 1024).toFixed(1); }
+    function pct(a, b)  { return b > 0 ? Math.round((a / b) * 100) : 0; }
+    function set(id, v) { const e = document.getElementById(id); if (e) e.textContent = v; }
+
+    function barClass(p) { return p >= 88 ? 'bar-crit' : p >= 68 ? 'bar-warn' : 'bar-ok'; }
+    function tempClass(t) { return t >= 70 ? 'bar-crit' : t >= 55 ? 'bar-warn' : 'bar-ok'; }
+
+    function setBar(id, p, cls) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.style.width = Math.min(p, 100) + '%';
+        el.className = 'bar-fill ' + (cls || barClass(p));
+    }
+
+    function formatUptime(s) {
+        const d = Math.floor(s/86400), h = Math.floor((s%86400)/3600), m = Math.floor((s%3600)/60);
+        if (d > 0) return `${d}d ${h}h`;
+        if (h > 0) return `${h}h ${m}m`;
+        return `${m}m`;
+    }
+
+    async function fetchStats() {
+        const host = activeHost.trim();
+        if (!host) return;
+        try {
+            const query = DEVICE_HOST_EDITABLE ? ('?host=' + encodeURIComponent(host)) : '';
+            const res  = await fetch('/api/device-stats' + query, { signal: AbortSignal.timeout(6000) });
+            const json = await res.json();
+            if (!json.ok) { showError(asmoGuidance(json.error || 'Unknown error')); return; }
+            render(json.data);
+        } catch(e) {
+            showError(asmoGuidance('Request timed out — is Asmo running?'));
+        }
+    }
+
+    function showError(msg) {
+        document.getElementById('loadingState').style.display   = 'none';
+        document.getElementById('statsContent').style.display   = 'none';
+        document.getElementById('errorState').style.display     = 'flex';
+        document.getElementById('errorDetail').textContent      = msg;
+        document.getElementById('liveIndicator').style.background = 'var(--status-offline)';
+        document.getElementById('liveLabel').textContent        = 'Offline';
+    }
+
+    function render(d) {
+        document.getElementById('loadingState').style.display   = 'none';
+        document.getElementById('errorState').style.display     = 'none';
+        document.getElementById('statsContent').style.display   = 'block';
+        document.getElementById('liveIndicator').style.background = 'var(--status-live)';
+        document.getElementById('liveLabel').textContent        = 'Live';
+
+        set('deviceTitle',   `${d.manufacturer} ${d.product_model}`);
+        set('deviceSubtitle', `Android ${d.android_version} · ${d.soc_model} · ${d.kernel_version.split('-')[0]}`);
+
+        // Total CPU (average of all cores)
+        const totalCpu = d.cores.reduce((acc, c) => acc + c.usage, 0) / d.cores.length;
+        set('s-cpu-total', totalCpu.toFixed(0) + '%');
+        setBar('bar-cpu-total', totalCpu, barClass(totalCpu));
+
+        // Mini core bars
+        const mini = document.getElementById('miniCores');
+        mini.innerHTML = '';
+        for (const core of d.cores) {
+            const u = core.usage;
+            const bar = document.createElement('div');
+            bar.title = `${core.name}: ${u.toFixed(0)}%`;
+            bar.style.cssText = `height:28px; background:var(--bar-track); border:1px solid var(--line-subtle); border-radius:var(--radius-sm); overflow:hidden; position:relative;`;
+            bar.innerHTML = `<div style="position:absolute;bottom:0;left:0;right:0;height:${u}%;background:${u>=88?'var(--crit-soft)':u>=68?'var(--warn-soft)':'var(--ok-soft)'};transition:height 0.6s ease;border-radius:var(--radius-sm);"></div>`;
+            mini.appendChild(bar);
+        }
+
+        // Battery
+        const bl = d.battery_level;
+        set('s-battery-pct', bl + '%');
+        set('s-battery-status', d.battery_status);
+        set('s-battery-temp', d.battery_temp.toFixed(1) + ' °C');
+        set('s-screen', (d.brightness * 100).toFixed(0) + '% brightness');
+        setBar('bar-battery', bl, bl <= 15 ? 'bar-crit' : bl <= 30 ? 'bar-warn' : 'bar-ok');
+
+        // Uptime
+        set('s-uptime', formatUptime(d.uptime_seconds));
+        set('s-refresh', d.refresh_rate.toFixed(0) + ' Hz display');
+
+        // Device identity
+        set('s-device-short', `${d.manufacturer} ${d.product_model}`);
+        set('s-soc-short', d.soc_model);
+        set('s-android-short', `Android ${d.android_version}`);
+
+        // RAM
+        const ramP = pct(d.memory_used_mb, d.memory_total_mb);
+        set('s-ram-used', gb(d.memory_used_mb) + ' GB');
+        set('s-ram-total', '/ ' + gb(d.memory_total_mb) + ' GB');
+        set('s-ram-pct', ramP + '% used');
+        setBar('bar-ram', ramP);
+
+        // Swap
+        const swapP = pct(d.swap_used_mb, d.swap_total_mb);
+        set('s-swap-used', gb(d.swap_used_mb) + ' GB');
+        set('s-swap-total', '/ ' + gb(d.swap_total_mb) + ' GB');
+        set('s-swap-pct', swapP + '% used');
+        setBar('bar-swap', swapP);
+
+        // Thermals
+        set('s-cpu-temp', d.cpu_temp.toFixed(1) + ' °C');
+        setBar('bar-cpu-temp', Math.min((d.cpu_temp / 90) * 100, 100), tempClass(d.cpu_temp));
+        set('s-gpu-temp', d.gpu_temp.toFixed(1) + ' °C');
+        setBar('bar-gpu-temp', Math.min((d.gpu_temp / 90) * 100, 100), tempClass(d.gpu_temp));
+        const gl = d.gpu_load;
+        set('s-gpu-load', gl !== null ? gl.toFixed(0) + '%' : 'N/A');
+        setBar('bar-gpu-load', gl !== null ? gl : 0);
+
+        // Storage
+        const storUsed = d.storage_total_gb - d.storage_free_gb;
+        const storP = pct(storUsed, d.storage_total_gb);
+        set('s-storage-detail', storUsed.toFixed(1) + ' GB used of ' + d.storage_total_gb.toFixed(1) + ' GB');
+        set('s-storage-used', storP + '% used');
+        set('s-storage-free', d.storage_free_gb.toFixed(1) + ' GB free');
+        setBar('bar-storage', storP);
+
+        // CPU Cores
+        const grid = document.getElementById('coresGrid');
+        grid.innerHTML = '';
+        for (const core of d.cores) {
+            const u = core.usage;
+            const bc = barClass(u);
+            const div = document.createElement('div');
+            div.style.cssText = 'background-color:var(--surface-1); border:1px solid var(--line-subtle); box-shadow:var(--shadow-sm); border-radius:var(--radius-md); padding:16px 18px;';
+            div.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                    <span style="font-size:11px;font-weight:600;letter-spacing:0.8px;text-transform:uppercase;color:var(--text-faint);">${core.name}</span>
+                    <span style="font-size:11px;color:var(--text-muted);">${core.cur_freq} MHz</span>
+                </div>
+                <div style="display:flex; align-items:baseline; gap:2px; margin-bottom:6px;">
+                    <span style="font-size:22px;font-weight:600;color:var(--text-main);">${u.toFixed(0)}</span>
+                    <span style="font-size:12px;color:var(--text-muted);">%</span>
+                </div>
+                <div style="background:var(--bar-track);border:1px solid var(--line-subtle);border-radius:999px;height:6px;overflow:hidden;">
+                    <div class="bar-fill ${bc}" style="width:${u}%"></div>
+                </div>
+                <div style="font-size:12px;color:var(--text-faint);margin-top:8px;">${core.model_name}</div>`;
+            grid.appendChild(div);
+        }
+    }
+</script>
+</body>
+</html>

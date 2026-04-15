@@ -1,0 +1,1335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ instance_name }} - Minara</title>
+    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+    <script src="https://unpkg.com/htmx.org/dist/ext/sse.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap');
+        :root {
+            --surface-0: #0d0d0d;
+            --surface-1: #151515;
+            --surface-2: #1d1d1d;
+            --surface-3: #252525;
+
+            --text-primary: #f2f2f2;
+            --text-secondary: #b7b7b7;
+            --text-tertiary: #8d8d8d;
+
+            --accent: #ff7d3b;
+            --accent-hover: #ff965f;
+            --accent-soft: rgba(255, 125, 59, 0.16);
+            --accent-soft-strong: rgba(255, 125, 59, 0.28);
+
+            --line-subtle: rgba(255, 255, 255, 0.12);
+            --line-accent: rgba(255, 125, 59, 0.64);
+            --line-danger: rgba(255, 71, 87, 0.65);
+
+            --shadow-sm: 0 6px 18px rgba(0, 0, 0, 0.3);
+            --shadow-md: 0 12px 30px rgba(0, 0, 0, 0.38);
+            --shadow-hover: 0 16px 34px rgba(0, 0, 0, 0.45);
+            --focus-ring: 0 0 0 3px rgba(255, 125, 59, 0.28);
+
+            --radius-sm: 5px;
+            --radius-md: 5px;
+
+            --bar-track: #242424;
+            --bar-fill: #ff8a4d;
+            --ok: #ff8a4d;
+            --warn: #f2b555;
+            --crit: #e96a5e;
+            --ok-soft: #ff9a63;
+            --warn-soft: #f6c979;
+            --crit-soft: #ef8479;
+
+            --danger-bg: #cf5a4a;
+            --danger-hover: #dc6a59;
+            --danger-border: var(--line-danger);
+            --danger-border-hover: #f18b80;
+            --danger-text: #fefefe;
+            --danger-text-hover: #ffffff;
+
+            --delete-bg: #2f2421;
+            --delete-hover: #3a2b27;
+            --delete-border: #7d5d56;
+            --delete-border-hover: #9a7066;
+            --delete-text: #ffd8cf;
+            --delete-text-hover: #ffe8e1;
+
+            --control-start-bg: var(--accent);
+            --control-restart-bg: #3a312d;
+            --control-start-hover: var(--accent-hover);
+            --control-restart-hover: #4a3d37;
+            --control-disabled-bg: #2b2b2b;
+            --control-disabled-text: #8a8a8a;
+            --control-disabled-warm-bg: #2b2b2b;
+            --control-disabled-warm-text: #8a8a8a;
+            --control-pill-bg: var(--surface-2);
+
+            --status-live: #ff9a63;
+            --status-offline: #8d8d8d;
+            --status-offline-dot: #4a4a4a;
+            --success-bg: rgba(107, 211, 144, 0.14);
+            --success-border: rgba(107, 211, 144, 0.48);
+            --success-text: #d5f5de;
+            --error-bg: rgba(233, 106, 94, 0.15);
+            --error-border: rgba(233, 106, 94, 0.58);
+            --error-text: #ffd9d4;
+
+            /* legacy aliases used across inline styles and scripts */
+            --bg-base: var(--surface-0);
+            --bg-panel: var(--surface-1);
+            --bg-elev: var(--surface-2);
+            --border-soft: var(--line-subtle);
+            --border-strong: var(--line-accent);
+            --text-hero: var(--text-primary);
+            --text-strong: var(--text-primary);
+            --text-main: var(--text-primary);
+            --text-console: #e7e7e7;
+            --text-soft: var(--text-secondary);
+            --text-muted: var(--text-secondary);
+            --text-dim: var(--text-tertiary);
+            --text-subtle: var(--text-tertiary);
+            --text-faint: #7a7a7a;
+            --pumpkin-black: #0f0f0f;
+            --pumpkin-white: #ffffff;
+            --pumpkin-blue: #4169e1;
+            --pumpkin-green: #00c853;
+            --pumpkin-purple: #9b59b6;
+            --pumpkin-pink: #ff69b4;
+            --pumpkin-yellow: #ffd93d;
+            --pumpkin-red: #ff4757;
+            --pumpkin-border: 1px solid var(--line-subtle);
+            --pumpkin-border-white: 1px solid rgba(255, 255, 255, 0.25);
+            --pumpkin-shadow: var(--shadow-sm);
+            --pumpkin-shadow-lg: var(--shadow-md);
+            --pumpkin-shadow-hover: var(--shadow-hover);
+        }
+        * { font-family: 'Manrope', sans-serif; box-sizing: border-box; }
+        body { background-color: var(--bg-base); color: var(--text-strong); margin: 0; padding: 0; }
+        .rounded-none,
+        .rounded-sm,
+        .rounded-md {
+            border-radius: var(--radius-sm) !important;
+        }
+        nav a {
+            border: 1px solid var(--line-subtle);
+            border-radius: var(--radius-sm);
+            transition: border-color 0.16s ease, background 0.16s ease, box-shadow 0.16s ease, color 0.16s ease, transform 0.16s ease;
+        }
+        nav a:hover {
+            transform: translateY(-1px);
+            border-color: var(--line-accent);
+            background: var(--accent-soft);
+            box-shadow: var(--shadow-sm);
+            color: var(--text-hero) !important;
+        }
+
+        #console-output {
+            background-color: var(--bg-base);
+            color: var(--text-console);
+            font-family: 'Menlo', 'Monaco', 'Consolas', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        #console-output div {
+            border-left: 2px solid transparent;
+            padding-left: 8px;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        #console-output div:hover {
+            border-left-color: var(--accent);
+            background: var(--accent-soft);
+        }
+        .log-ts { color: var(--text-faint); }
+        .log-info { color: var(--text-soft); }
+        .log-warn { color: var(--warn-soft); }
+        .log-error { color: var(--crit-soft); }
+        .log-debug { color: var(--text-subtle); }
+        .log-ok { color: var(--accent-hover); }
+        .log-key { color: var(--accent); }
+        .log-path { color: var(--text-soft); }
+        .log-num { color: var(--text-main); }
+        .log-cmd { color: var(--accent); }
+        .log-muted { color: var(--text-faint); }
+
+        .btn-toggle {
+            background-color: var(--accent);
+            color: var(--pumpkin-black);
+            font-size: 13px;
+            font-weight: 600;
+            border: 1px solid var(--line-accent);
+            box-shadow: none;
+            padding: 12px 20px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.15s;
+        }
+        .btn-toggle:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-sm);
+            background-color: var(--accent-hover);
+        }
+        .btn-toggle:active { opacity: 0.85; }
+        .btn-toggle.running { background: var(--danger-bg); border-color: var(--danger-border); color: var(--danger-text); }
+        .btn-toggle.running:hover { background: var(--danger-hover); }
+
+        input[type="text"] {
+            background-color: var(--bg-base);
+            border: var(--pumpkin-border);
+            box-shadow: none;
+            color: var(--text-main);
+            font-size: 14px;
+            border-radius: var(--radius-sm);
+            padding: 12px 14px;
+            outline: none;
+            transition: border-color 0.15s, box-shadow 0.15s;
+            width: 100%;
+        }
+        input[type="text"]:focus {
+            border-color: var(--line-accent);
+            box-shadow: var(--focus-ring);
+        }
+        input[type="text"]::placeholder { color: var(--text-faint); }
+
+        .offline-tag {
+            font-size: 10px;
+            color: var(--text-muted);
+            background-color: var(--bg-panel);
+            border: 1px solid var(--line-subtle);
+            border-radius: var(--radius-sm);
+            padding: 1px 5px;
+        }
+
+        .monitor-header {
+            padding: 12px 16px;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--text-faint);
+            border-bottom: var(--pumpkin-border);
+            background: rgba(255, 255, 255, 0.02);
+        }
+        .mon-card {
+            flex: 0 0 auto;
+            background: transparent;
+            border: none;
+            box-shadow: none;
+            border-radius: 0;
+            padding: 14px 16px 12px;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            overflow: hidden;
+            border-top: var(--pumpkin-border);
+        }
+        .monitor-header + .mon-card {
+            border-top: none;
+        }
+        .mon-lbl {
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            margin-bottom: 6px;
+        }
+        .mon-big { font-size: 26px; font-weight: 700; color: var(--text-main); line-height: 1; }
+        .mon-unit { font-size: 13px; color: var(--text-muted); }
+        .mon-row { display: flex; justify-content: space-between; align-items: baseline; }
+        .mon-row-lbl { font-size: 12px; color: var(--text-secondary); }
+        .mon-row-val { font-size: 12px; font-weight: 600; color: var(--text-soft); }
+        .bar { background-color: var(--bar-track); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 999px; height: 8px; overflow: hidden; margin: 6px 0 10px; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04); }
+        .bar.last { margin-bottom: 0; }
+        .bar-fill { height: 100%; border-radius: 999px; background: var(--bar-fill); transition: width 0.7s ease, background 0.4s; }
+
+        .console-layout {
+            display: grid;
+            grid-template-columns: minmax(0, 3fr) minmax(220px, 1fr);
+            grid-template-rows: auto 65vh;
+            column-gap: 18px;
+            row-gap: 12px;
+            align-items: stretch;
+        }
+        .console-topbar-main {
+            grid-column: 1;
+            grid-row: 1;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            min-width: 0;
+            padding: 0 10px;
+        }
+        .console-title {
+            margin: 0;
+            font-size: 42px;
+            font-weight: 700;
+            line-height: 1;
+            letter-spacing: -0.02em;
+            color: var(--text-hero);
+            transform: translateY(1px);
+        }
+        .instance-nav-label {
+            margin: 16px 3px 4px;
+            padding: 11px 0 2px;
+            border-top: var(--pumpkin-border);
+            color: var(--text-faint);
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+        .console-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-shrink: 0;
+        }
+        .console-card {
+            grid-column: 1;
+            grid-row: 2;
+            height: 100%;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--bg-panel);
+            border: var(--pumpkin-border);
+            box-shadow: var(--pumpkin-shadow-lg);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+        }
+        .monitor-panel {
+            grid-column: 2;
+            grid-row: 1 / span 2;
+            height: 100%;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            background-color: var(--bg-panel);
+            border: var(--pumpkin-border);
+            box-shadow: var(--pumpkin-shadow-lg);
+            border-radius: var(--radius-md);
+            overflow-y: auto;
+        }
+        .control-pill {
+            display: flex;
+            align-items: center;
+            border: var(--pumpkin-border);
+            background: var(--control-pill-bg);
+            border-radius: var(--radius-md);
+            padding: 3px;
+            overflow: hidden;
+            box-shadow: none;
+        }
+        .control-btn {
+            min-width: 92px;
+            height: 40px;
+            padding: 0 18px;
+            border: 1px solid transparent;
+            border-radius: 0;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--pumpkin-white);
+            cursor: pointer;
+            box-shadow: none;
+            transition: background 0.15s, color 0.15s, transform 0.12s, opacity 0.15s, border-color 0.15s, box-shadow 0.15s;
+        }
+        .control-btn + .control-btn {
+            margin-left: 0;
+            border-left-width: 0;
+        }
+        .control-btn.start {
+            background: var(--control-start-bg);
+            border-color: var(--line-accent);
+            border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+            color: var(--bg-base);
+        }
+        .control-btn.restart {
+            background: var(--control-restart-bg);
+            border-color: var(--line-subtle);
+            border-radius: 0;
+            color: var(--pumpkin-white);
+        }
+        .control-btn.stop {
+            background: var(--danger-bg);
+            border-color: var(--danger-border);
+            border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+            color: var(--pumpkin-white);
+        }
+        .control-btn.start:hover:not(:disabled) { background: var(--control-start-hover); box-shadow: none; }
+        .control-btn.restart:hover:not(:disabled) { background: var(--control-restart-hover); border-color: var(--line-accent); box-shadow: none; }
+        .control-btn.stop:hover:not(:disabled) { background: var(--danger-hover); border-color: var(--danger-border-hover); box-shadow: none; }
+        .control-btn:disabled {
+            cursor: not-allowed;
+            pointer-events: none;
+            opacity: 1;
+            border-color: var(--line-subtle);
+        }
+        .control-btn.start:disabled,
+        .control-btn.restart:disabled {
+            background: var(--control-disabled-bg);
+            color: var(--control-disabled-text);
+        }
+        .control-btn.stop:disabled {
+            background: var(--control-disabled-warm-bg);
+            color: var(--control-disabled-warm-text);
+        }
+        .more-actions {
+            position: relative;
+            flex-shrink: 0;
+        }
+        .more-btn {
+            height: 40px;
+            padding: 0 14px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--line-subtle);
+            background: var(--surface-2);
+            color: var(--text-soft);
+            box-shadow: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            cursor: pointer;
+            transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.08s;
+        }
+        .more-btn:hover {
+            background: var(--surface-3);
+            border-color: var(--line-accent);
+            color: var(--text-primary);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-sm);
+        }
+        .more-menu {
+            position: absolute;
+            top: calc(100% + 6px);
+            right: 0;
+            min-width: 180px;
+            border: var(--pumpkin-border);
+            border-radius: var(--radius-sm);
+            background: var(--bg-panel);
+            box-shadow: var(--shadow-md);
+            overflow: hidden;
+            z-index: 20;
+        }
+        .more-item {
+            width: 100%;
+            text-align: left;
+            padding: 10px 12px;
+            border: 0;
+            border-bottom: var(--pumpkin-border);
+            background: transparent;
+            color: var(--text-soft);
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s, color 0.15s;
+        }
+        .more-item:last-child {
+            border-bottom: 0;
+        }
+        .more-item:hover {
+            background: rgba(255, 255, 255, 0.03);
+            color: var(--text-primary);
+        }
+        .more-item.danger {
+            color: var(--delete-text);
+            background: var(--delete-bg);
+        }
+        .more-item.danger:hover {
+            background: var(--delete-hover);
+            color: var(--delete-text-hover);
+        }
+
+        @media (max-width: 1200px) {
+            .console-title { font-size: 40px; }
+        }
+        @media (max-width: 980px) {
+            .console-layout {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto 60vh auto;
+                row-gap: 12px;
+            }
+            .console-topbar-main {
+                flex-wrap: wrap;
+                padding: 0;
+            }
+            .console-title {
+                font-size: 32px;
+                transform: translateY(0);
+            }
+            .console-actions {
+                width: 100%;
+                justify-content: flex-end;
+            }
+            .main-content-wrap {
+                padding: 18px 20px 18px;
+                overflow-y: auto;
+            }
+            .console-card {
+                grid-column: 1;
+                grid-row: 2;
+            }
+            .monitor-panel {
+                grid-column: 1;
+                grid-row: 3;
+                min-height: 320px;
+            }
+        }
+        @media (max-width: 760px) {
+            .console-topbar-main {
+                align-items: flex-start;
+            }
+            .console-actions {
+                gap: 10px;
+                justify-content: space-between;
+            }
+            .control-pill {
+                flex: 1;
+                min-width: 0;
+            }
+            .control-btn {
+                min-width: 0;
+                flex: 1;
+                padding: 0 10px;
+            }
+            .more-actions {
+                flex-shrink: 0;
+            }
+        }
+
+        .main-content-wrap {
+            flex: 1;
+            width: 100%;
+            padding: 28px 28px 20px 36px;
+            min-height: 0;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body data-device-host-editable="{{ allow_device_host_edit }}" data-device-host="{{ default_device_host }}">
+    <div class="flex h-screen overflow-hidden">
+
+    <!-- Sidebar -->
+    <div class="w-56 flex flex-col flex-shrink-0" style="border-right: var(--pumpkin-border); background-color: var(--bg-base);">
+        <a href="/" class="block px-5 py-5" style="border-bottom: var(--pumpkin-border);">
+            <img src="/assets/transparent_logo.png" alt="Minara" style="display: block; width: 100%; max-width: 170px; height: auto; margin: 0 auto;" />
+        </a>
+        <nav class="p-3 flex flex-col gap-1 flex-1">
+                <a href="/" class="flex items-center gap-2.5 px-3 py-2.5 rounded-sm text-sm font-medium transition-colors"
+               style="color: var(--text-subtle);">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+                </svg>
+                My Instances
+            </a>
+                <a href="/device" class="flex items-center gap-2.5 px-3 py-2.5 rounded-sm text-sm font-medium transition-colors"
+               style="color: var(--text-subtle);">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="5" y="2" width="14" height="20" rx="2"/><circle cx="12" cy="17" r="1" fill="currentColor" stroke="none"/>
+                </svg>
+                Device Info
+            </a>
+                <a href="/backups" class="flex items-center gap-2.5 px-3 py-2.5 rounded-sm text-sm font-medium transition-colors"
+                   style="color: var(--text-subtle);">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="4" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="12" y1="14" x2="12" y2="18"/>
+                    </svg>
+                    Backups
+                </a>
+                <div class="instance-nav-label" title="{{ instance_name }}">{{ instance_name }}</div>
+                <a id="instance-tab-main" href="#" class="flex items-center gap-2.5 px-3 py-2.5 rounded-sm text-sm font-medium transition-colors"
+                   style="color: var(--text-hero); border-color: var(--line-accent); background: var(--accent-soft);">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+                    </svg>
+                    Main
+                </a>
+                <a id="instance-tab-settings" href="#" class="flex items-center gap-2.5 px-3 py-2.5 rounded-sm text-sm font-medium transition-colors"
+                   style="color: var(--text-subtle);">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/>
+                        <line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/>
+                        <line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/>
+                        <line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/>
+                    </svg>
+                    Settings
+                </a>
+                <a id="instance-tab-files" href="#" class="flex items-center gap-2.5 px-3 py-2.5 rounded-sm text-sm font-medium transition-colors"
+                   style="color: var(--text-subtle);">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 7h5l2 2h11v10a2 2 0 0 1-2 2H3z"/><path d="M3 7V5a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2"/>
+                    </svg>
+                    Files
+                </a>
+        </nav>
+    </div>
+
+    <!-- Main area: scrollable, centered container -->
+    <div class="flex-1 flex flex-col min-w-0 min-h-0">
+        <div class="main-content-wrap">
+            <div class="console-layout">
+                <div class="console-topbar-main">
+                <h1 id="instance-title" class="console-title">{{ instance_name }}</h1>
+                <div class="console-actions">
+                    <div class="control-pill">
+                        <button id="start-btn" class="control-btn start" onclick="startServer()">Start</button>
+                        <button id="restart-btn" class="control-btn restart" onclick="restartServer()">Restart</button>
+                        <button id="stop-btn" class="control-btn stop" onclick="stopServer()">Stop</button>
+                    </div>
+
+                    <div class="more-actions">
+                        <button id="more-actions-btn" class="more-btn" type="button" title="Instance Actions" aria-haspopup="menu" aria-expanded="false">
+                            <span>Actions</span>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/>
+                            </svg>
+                        </button>
+                        <div id="more-actions-menu" class="more-menu" hidden>
+                            <button type="button" class="more-item" onclick="renameInstance()">Rename Instance</button>
+                            <button type="button" class="more-item danger" onclick="deleteInstance()">Delete Instance</button>
+                        </div>
+                    </div>
+                </div>
+                </div>
+
+            <!-- Console card -->
+            <div class="console-card">
+
+                <!-- Log output -->
+                <div id="console-output"
+                     hx-ext="sse"
+                     sse-connect=""
+                     sse-swap="message"
+                     hx-swap="beforeend"
+                     style="flex:1; overflow-y:auto; padding:14px 24px 10px; min-height:0;">
+                    {% for line in history %}
+                        <div>{{ line }}</div>
+                    {% endfor %}
+                    {% if history.is_empty() %}
+                        <div data-console-placeholder="true" style="opacity:0.2; font-style:italic; font-size:12px; padding-left:8px;">— waiting for logs —</div>
+                    {% endif %}
+                </div>
+
+                <!-- Command input -->
+                <div style="padding:12px 18px 14px; flex-shrink:0; border-top: var(--pumpkin-border); display:flex; gap:10px;">
+                      <form id="command-form"
+                          hx-post=""
+                          hx-target="#cmd-feedback"
+                          hx-on::before-request="prepareCommandSubmit(event)"
+                          hx-on::after-request="handleCommandSubmit(event)"
+                          style="display:flex; width:100%;">
+                        <input type="text" id="command-input" name="command"
+                               placeholder="Enter command..."
+                               autocomplete="off">
+                    </form>
+                    <div id="cmd-feedback" style="display:none;"></div>
+                </div>
+
+            </div>
+
+            <!-- Monitor panel -->
+            <div class="monitor-panel" id="monitor-panel">
+                <div class="monitor-header">Live Monitor</div>
+
+                <div class="mon-card">
+                    <div class="mon-lbl">Host CPU</div>
+                    <div class="mon-row" style="margin-bottom:6px;">
+                        <div>
+                            <span id="m-cpu" class="mon-big">--</span>
+                            <span class="mon-unit">%</span>
+                        </div>
+                        <span id="m-load" class="mon-row-val">load --</span>
+                    </div>
+                    <div class="bar">
+                        <div id="m-cpu-bar" class="bar-fill" style="width:0%"></div>
+                    </div>
+                    <div class="mon-row">
+                        <span class="mon-row-lbl">Uptime</span>
+                        <span id="m-uptime" class="mon-row-val">--</span>
+                    </div>
+                </div>
+
+                <div class="mon-card">
+                    <div class="mon-lbl">Host RAM</div>
+                    <div class="mon-row" style="margin-bottom:6px;">
+                        <span id="m-ram-used" class="mon-row-val">--</span>
+                        <span id="m-ram-percent" class="mon-row-val">--</span>
+                    </div>
+                    <div class="bar last">
+                        <div id="m-ram-bar" class="bar-fill" style="width:0%"></div>
+                    </div>
+                </div>
+
+                <div class="mon-card">
+                    <div class="mon-lbl">Bedrock RAM</div>
+                    <div class="mon-row" style="margin-bottom:6px;">
+                        <span id="m-proc-ram" class="mon-row-val"><span class="offline-tag">offline</span></span>
+                        <span id="m-proc-share" class="mon-row-val">--</span>
+                    </div>
+                    <div class="bar">
+                        <div id="m-proc-bar" class="bar-fill" style="width:0%"></div>
+                    </div>
+                    <div class="mon-row">
+                        <span class="mon-row-lbl">Process</span>
+                        <span id="m-proc-state" class="mon-row-val">Offline</span>
+                    </div>
+                </div>
+
+                <div class="mon-card">
+                    <div class="mon-lbl">Disk</div>
+                    <div class="mon-row" style="margin-bottom:6px;">
+                        <span id="m-disk-used" class="mon-row-val">--</span>
+                        <span id="m-disk-percent" class="mon-row-val">--</span>
+                    </div>
+                    <div class="bar last">
+                        <div id="m-disk-bar" class="bar-fill" style="width:0%"></div>
+                    </div>
+                </div>
+            </div>
+
+            </div><!-- /layout -->
+
+            <!-- Add more rows below -->
+
+        </div><!-- /container -->
+    </div><!-- /main -->
+</div>
+
+<script>
+    // ---- Console auto-scroll ----
+    const consoleEl    = document.getElementById('console-output');
+    const instanceTitleEl = document.getElementById('instance-title');
+    const instanceName = (instanceTitleEl?.textContent || '').trim();
+    const encodedInstanceName = encodeURIComponent(instanceName);
+    const instanceApiBase = `/instance/${encodedInstanceName}`;
+    const processStatsApi = `/api/process-stats/${encodedInstanceName}`;
+    const instanceTabMain = document.getElementById('instance-tab-main');
+    const instanceTabSettings = document.getElementById('instance-tab-settings');
+    const instanceTabFiles = document.getElementById('instance-tab-files');
+    const actionsMenuBtn = document.getElementById('more-actions-btn');
+    const actionsMenu = document.getElementById('more-actions-menu');
+
+    if (instanceTabMain) {
+        instanceTabMain.setAttribute('href', `/instance/${encodedInstanceName}`);
+    }
+    if (instanceTabSettings) {
+        instanceTabSettings.setAttribute('href', `/instance/${encodedInstanceName}/settings`);
+    }
+    if (instanceTabFiles) {
+        instanceTabFiles.setAttribute('href', `/instance/${encodedInstanceName}/files`);
+    }
+
+    if (consoleEl) {
+        consoleEl.setAttribute('sse-connect', `${instanceApiBase}/stream`);
+    }
+    const commandForm = document.getElementById('command-form');
+    if (commandForm) {
+        commandForm.setAttribute('hx-post', `${instanceApiBase}/input`);
+    }
+    const commandInput = document.getElementById('command-input');
+    function escapeHtml(value) {
+        return String(value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function levelClass(level) {
+        const upper = level.toUpperCase();
+        if (upper === 'WARN' || upper === 'WARNING') return 'log-warn';
+        if (upper === 'ERROR') return 'log-error';
+        if (upper === 'DEBUG' || upper === 'TRACE') return 'log-debug';
+        return 'log-info';
+    }
+
+    const LOG_TOKEN_REGEX = /(NO LOG FILE!?|Server started|Starting server|Stopping server|Shutdown complete|Ctrl\+C fallback|Graceful stop timed out|force killed|ONLINE|READY|Loaded|Opening level|\b(?:port|IPv4|IPv6|telemetry|Difficulty|Game mode|Configuration|Version|Build ID|Branch|Commit ID|Session ID|Level Name|Pack Stack)\b|\/[A-Za-z0-9_./-]+|\b\d+(?:\.\d+)?%?\b)/gi;
+
+    function classifyLogToken(token) {
+        const lower = token.toLowerCase();
+
+        if (/^\/[A-Za-z0-9_./-]+$/.test(token)) return 'log-path';
+        if (/^\d+(?:\.\d+)?%?$/.test(token)) return 'log-num';
+        if (lower === 'no log file' || lower === 'no log file!') return 'log-warn';
+
+        if (
+            lower === 'server started' ||
+            lower === 'starting server' ||
+            lower === 'ready' ||
+            lower === 'online' ||
+            lower === 'opening level' ||
+            lower === 'loaded'
+        ) {
+            return 'log-ok';
+        }
+
+        if (lower === 'shutdown complete') {
+            return 'log-ok';
+        }
+
+        if (lower === 'stopping server' || lower === 'ctrl+c fallback' || lower === 'graceful stop timed out' || lower === 'force killed') {
+            return 'log-warn';
+        }
+
+        return 'log-key';
+    }
+
+    function decorateLogMessage(message) {
+        let out = '';
+        let lastIndex = 0;
+        LOG_TOKEN_REGEX.lastIndex = 0;
+
+        let match;
+        while ((match = LOG_TOKEN_REGEX.exec(message)) !== null) {
+            const matchStart = match.index;
+            const token = match[0];
+
+            out += escapeHtml(message.slice(lastIndex, matchStart));
+            out += `<span class="${classifyLogToken(token)}">${escapeHtml(token)}</span>`;
+            lastIndex = LOG_TOKEN_REGEX.lastIndex;
+        }
+
+        out += escapeHtml(message.slice(lastIndex));
+        return out;
+    }
+
+    function highlightLogText(rawText) {
+        const line = rawText || '';
+        if (!line.trim()) return '';
+
+        if (/^[=\-\s]+$/.test(line)) {
+            return `<span class="log-muted">${escapeHtml(line)}</span>`;
+        }
+
+        if (line.startsWith('>')) {
+            return `<span class="log-cmd">${escapeHtml(line)}</span>`;
+        }
+
+        let rest = line;
+        let out = '';
+
+        const tsLevelCombined = rest.match(/^\[(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}:\d{3})\s+(INFO|WARN|WARNING|ERROR|DEBUG|TRACE)\]\s*/i);
+        if (tsLevelCombined) {
+            const ts = tsLevelCombined[1];
+            const lvl = tsLevelCombined[2].toUpperCase();
+            out += `<span class="log-ts">[${escapeHtml(ts)}]</span> `;
+            out += `<span class="${levelClass(lvl)}">[${escapeHtml(lvl)}]</span> `;
+            rest = rest.slice(tsLevelCombined[0].length);
+        }
+
+        if (!tsLevelCombined) {
+            const tsMatch = rest.match(/^\[(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}:\d{3})\]\s*/);
+            if (tsMatch) {
+                out += `<span class="log-ts">${escapeHtml(tsMatch[0].trim())}</span> `;
+                rest = rest.slice(tsMatch[0].length);
+            }
+        }
+
+        const levelMatch = rest.match(/^\[(INFO|WARN|WARNING|ERROR|DEBUG|TRACE)\]\s*/i) || rest.match(/^(INFO|WARN|WARNING|ERROR|DEBUG|TRACE)\s+/i);
+        if (levelMatch) {
+            const levelToken = levelMatch[1].toUpperCase();
+            out += `<span class="${levelClass(levelToken)}">[${escapeHtml(levelToken)}]</span> `;
+            rest = rest.slice(levelMatch[0].length);
+        }
+
+        out += decorateLogMessage(rest);
+        return out;
+    }
+
+    function highlightLogElement(el) {
+        if (!el || el.dataset.hl === '1') return;
+        const text = el.textContent || '';
+        el.innerHTML = highlightLogText(text);
+        el.dataset.hl = '1';
+    }
+
+    function highlightAllLogs() {
+        if (!consoleEl) return;
+        consoleEl.querySelectorAll(':scope > div').forEach(highlightLogElement);
+    }
+
+    highlightAllLogs();
+
+    const observer = new MutationObserver((mutations) => {
+        for (const mutation of mutations) {
+            mutation.addedNodes.forEach((node) => {
+                if (node.nodeType !== 1) return;
+                const element = node;
+                if (element.matches && element.matches('div')) {
+                    registerIncomingConsoleMessage(element.textContent || '');
+                    highlightLogElement(element);
+                }
+            });
+        }
+        consoleEl.scrollTop = consoleEl.scrollHeight;
+    });
+    observer.observe(consoleEl, { childList: true });
+    consoleEl.scrollTop = consoleEl.scrollHeight;
+
+    function closeActionsMenu() {
+        if (!actionsMenu || !actionsMenuBtn) return;
+        actionsMenu.hidden = true;
+        actionsMenuBtn.setAttribute('aria-expanded', 'false');
+    }
+
+    function toggleActionsMenu() {
+        if (!actionsMenu || !actionsMenuBtn) return;
+
+        const willOpen = actionsMenu.hidden;
+        actionsMenu.hidden = !willOpen;
+        actionsMenuBtn.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+    }
+
+    if (actionsMenuBtn) {
+        actionsMenuBtn.addEventListener('click', (event) => {
+            event.stopPropagation();
+            toggleActionsMenu();
+        });
+    }
+
+    document.addEventListener('click', (event) => {
+        if (!actionsMenu || !actionsMenuBtn) return;
+        if (actionsMenu.hidden) return;
+
+        const target = event.target;
+        if (!(target instanceof Node)) return;
+
+        if (!actionsMenu.contains(target) && !actionsMenuBtn.contains(target)) {
+            closeActionsMenu();
+        }
+    });
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+            closeActionsMenu();
+        }
+    });
+
+    // ---- Command history ----
+    const cmdHistory = [];
+    let historyIndex = -1, draftCommand = '', pendingSubmittedCommand = '';
+    commandInput.addEventListener('keydown', e => {
+        if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (!cmdHistory.length) return;
+            if (historyIndex === -1) draftCommand = commandInput.value;
+            historyIndex = Math.min(historyIndex + 1, cmdHistory.length - 1);
+            commandInput.value = cmdHistory[historyIndex];
+            commandInput.setSelectionRange(commandInput.value.length, commandInput.value.length);
+        } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (historyIndex === -1) return;
+            historyIndex--;
+            commandInput.value = historyIndex === -1 ? draftCommand : cmdHistory[historyIndex];
+            commandInput.setSelectionRange(commandInput.value.length, commandInput.value.length);
+        }
+    });
+
+    function prepareCommandSubmit(event) {
+        const requestCommand = event?.detail?.requestConfig?.parameters?.command;
+        const submitted = (typeof requestCommand === 'string' ? requestCommand : commandInput.value).trim();
+
+        if (!submitted) {
+            event.preventDefault();
+            return;
+        }
+
+        pendingSubmittedCommand = submitted.toLowerCase();
+
+        if (cmdHistory.length === 0 || cmdHistory[0] !== submitted) {
+            cmdHistory.unshift(submitted);
+            if (cmdHistory.length > 100) cmdHistory.pop();
+        }
+
+        historyIndex = -1;
+        draftCommand = '';
+
+        // Clear input right away so command entry feels instant.
+        queueMicrotask(() => { commandInput.value = ''; });
+    }
+
+    // ---- Server state ----
+    let isServerRunning = false;
+    let actionInFlight = false;
+
+    function applyServerButtonStates() {
+        const startBtn = document.getElementById('start-btn');
+        const restartBtn = document.getElementById('restart-btn');
+        const stopBtn = document.getElementById('stop-btn');
+        if (!startBtn || !restartBtn || !stopBtn) return;
+
+        startBtn.disabled = actionInFlight || isServerRunning;
+        restartBtn.disabled = actionInFlight || !isServerRunning;
+        stopBtn.disabled = actionInFlight || !isServerRunning;
+    }
+
+    function setServerState(running) {
+        isServerRunning = running;
+        applyServerButtonStates();
+    }
+
+    function isStopSuccessfulMessage(message) {
+        const text = (message || '').toLowerCase();
+        return text.includes('shutdown complete') || text.includes('no process found');
+    }
+
+    async function refreshServerState() {
+        try {
+            const data = await fetch(`${instanceApiBase}/status`).then(r => r.json());
+            setServerState(Boolean(data.running));
+        } catch (_) {
+            applyServerButtonStates();
+        }
+    }
+
+    async function initializeServerState() {
+        await refreshServerState();
+    }
+
+    let pendingActionFeedback = null;
+
+    function latestConsoleLineText() {
+        if (!consoleEl) return '';
+        const lastLine = consoleEl.querySelector(':scope > div:last-child');
+        return (lastLine?.textContent || '').trim();
+    }
+
+    function clearPendingActionFeedback() {
+        if (!pendingActionFeedback) return;
+        clearTimeout(pendingActionFeedback.timerId);
+        pendingActionFeedback = null;
+    }
+
+    function registerIncomingConsoleMessage(message) {
+        const text = (message || '').trim();
+        if (!text || !pendingActionFeedback) return;
+        if (pendingActionFeedback.text !== text) return;
+        clearPendingActionFeedback();
+    }
+
+    function parseActionResponseMessage(rawText) {
+        if (!rawText) return '';
+        const parser = document.createElement('div');
+        parser.innerHTML = rawText;
+        return (parser.textContent || '').trim();
+    }
+
+    function appendConsoleFeedback(message) {
+        const text = (message || '').trim();
+        if (!text || !consoleEl) return;
+
+        const placeholder = consoleEl.querySelector(':scope > div[data-console-placeholder="true"]');
+        if (placeholder) {
+            placeholder.remove();
+        }
+
+        const line = document.createElement('div');
+        line.textContent = text;
+        consoleEl.appendChild(line);
+        highlightLogElement(line);
+        consoleEl.scrollTop = consoleEl.scrollHeight;
+    }
+
+    function scheduleActionFeedback(message) {
+        const text = (message || '').trim();
+        if (!text || !consoleEl) return;
+
+        // SSE can deliver this line before the HTTP response resolves.
+        if (latestConsoleLineText() === text) return;
+
+        clearPendingActionFeedback();
+        pendingActionFeedback = {
+            text,
+            timerId: setTimeout(() => {
+                appendConsoleFeedback(text);
+                pendingActionFeedback = null;
+            }, 350)
+        };
+    }
+
+    async function runServerControlAction(action) {
+        const response = await fetch(`${instanceApiBase}/${action}`, { method: 'POST' });
+        const rawText = await response.text();
+        const message = parseActionResponseMessage(rawText) || `Request failed with status ${response.status}`;
+        scheduleActionFeedback(message);
+        return { message, ok: response.ok };
+    }
+
+    async function startServer() {
+        if (actionInFlight || isServerRunning) return;
+        actionInFlight = true;
+        applyServerButtonStates();
+        try {
+            const { message } = await runServerControlAction('start');
+            if (message.includes('Server started') || message.includes('already running')) {
+                setServerState(true);
+            }
+        } catch (e) {
+            appendConsoleFeedback(`Failed to send start request: ${e.message}`);
+        } finally {
+            actionInFlight = false;
+            await refreshServerState();
+        }
+    }
+
+    async function stopServer() {
+        if (actionInFlight || !isServerRunning) return;
+        actionInFlight = true;
+        applyServerButtonStates();
+        try {
+            const { message } = await runServerControlAction('stop');
+            if (isStopSuccessfulMessage(message)) {
+                setServerState(false);
+            }
+        } catch (e) {
+            appendConsoleFeedback(`Failed to send stop request: ${e.message}`);
+        } finally {
+            actionInFlight = false;
+            await refreshServerState();
+        }
+    }
+
+    async function restartServer() {
+        if (actionInFlight || !isServerRunning) return;
+        actionInFlight = true;
+        applyServerButtonStates();
+        try {
+            const { message: stopMessage } = await runServerControlAction('stop');
+            if (isStopSuccessfulMessage(stopMessage)) {
+                setServerState(false);
+            }
+
+            await new Promise(resolve => setTimeout(resolve, 900));
+
+            const { message: startMessage } = await runServerControlAction('start');
+            if (startMessage.includes('Server started') || startMessage.includes('already running')) {
+                setServerState(true);
+            }
+        } catch (e) {
+            appendConsoleFeedback(`Failed to send restart request: ${e.message}`);
+        } finally {
+            actionInFlight = false;
+            await refreshServerState();
+        }
+    }
+
+    function handleCommandSubmit(event) {
+        const command = pendingSubmittedCommand;
+        pendingSubmittedCommand = '';
+
+        if (!command) return;
+
+        const message = parseActionResponseMessage(event.detail.xhr.response);
+        if (command === 'start' && (message.includes('Server started') || message.includes('already running'))) setServerState(true);
+        else if (command === 'stop' && isStopSuccessfulMessage(message)) setServerState(false);
+        else if (command === 'restart' && (message.includes('Server started') || message.includes('already running'))) setServerState(true);
+        else if (command === 'restart') refreshServerState();
+    }
+
+    // ---- Sidebar refresh ----
+    let lastInstanceList = [], refreshInterval = null;
+    async function refreshInstanceSidebar() {
+        try {
+            const instances = await fetch('/api/instances').then(r => r.json());
+            const key = instances.join(',');
+            if (key === lastInstanceList.join(',')) return;
+            lastInstanceList = instances;
+            if (!instances.includes(instanceName)) window.location.href = '/';
+        } catch (_) {}
+    }
+
+    // ---- Delete ----
+    function renameInstance() {
+        closeActionsMenu();
+
+        if (!instanceName) {
+            alert('Instance name is not available.');
+            return;
+        }
+
+        const input = prompt('New instance name:', instanceName);
+        if (input === null) return;
+
+        const newName = input.trim();
+        if (!newName) {
+            alert('New instance name cannot be empty.');
+            return;
+        }
+
+        fetch(`/api/rename-instance/${encodedInstanceName}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ new_name: newName })
+        })
+            .then(r => r.json())
+            .then(d => {
+                if (d.status === 'success') {
+                    const nextName = (d.new_name || newName).trim();
+                    window.location.href = `/instance/${encodeURIComponent(nextName)}`;
+                } else {
+                    alert(d.message || 'Rename failed');
+                }
+            })
+            .catch(e => alert('Error: ' + e.message));
+    }
+
+    function deleteInstance() {
+        closeActionsMenu();
+        if (confirm(`Delete "${instanceName}"? This cannot be undone.`)) {
+            fetch(`/api/delete-instance/${encodedInstanceName}`, { method: 'DELETE' })
+                .then(r => r.json())
+                .then(d => { if (d.status === 'success') window.location.href = '/'; else alert(d.message); })
+                .catch(e => alert('Error: ' + e.message));
+        }
+    }
+
+    // ---- Monitor ----
+    const DEVICE_API_HOST_KEY = 'minara_device_api_host';
+    const DEVICE_HOST_EDITABLE = document.body.dataset.deviceHostEditable === 'true';
+    const DEFAULT_DEVICE_HOST = (document.body.dataset.deviceHost || 'localhost:3000').trim();
+    let monInterval = null;
+    let deviceTotalRamMb = null;
+
+    function barColor(p) { return p >= 88 ? 'var(--crit)' : p >= 68 ? 'var(--warn)' : 'var(--bar-fill)'; }
+    function setBar(id, p) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.style.width = Math.min(p, 100) + '%';
+        el.style.background = barColor(p);
+    }
+    function set(id, v) { const e = document.getElementById(id); if (e) e.textContent = v; }
+    function gb(mb) { return (mb / 1024).toFixed(1) + ' GB'; }
+    function pct(a, b) { return b > 0 ? Math.round((a / b) * 100) : 0; }
+    function formatUptime(s) {
+        const d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600), m = Math.floor((s % 3600) / 60);
+        if (d > 0) return `${d}d ${h}h`;
+        if (h > 0) return `${h}h ${m}m`;
+        return `${m}m`;
+    }
+
+    function setDeviceMetricsOffline(reasonText) {
+        set('m-cpu', '--');
+        set('m-load', reasonText || 'device offline');
+        set('m-uptime', '--');
+        set('m-ram-used', '--');
+        set('m-ram-percent', '--');
+        set('m-disk-used', '--');
+        set('m-disk-percent', '--');
+        setBar('m-cpu-bar', 0);
+        setBar('m-ram-bar', 0);
+        setBar('m-disk-bar', 0);
+    }
+
+    async function fetchMonitor() {
+        if (!document.getElementById('m-cpu')) return;
+
+        deviceTotalRamMb = null;
+        const host = DEVICE_HOST_EDITABLE
+            ? ((localStorage.getItem(DEVICE_API_HOST_KEY) || DEFAULT_DEVICE_HOST).trim())
+            : DEFAULT_DEVICE_HOST;
+
+        if (!host) {
+            setDeviceMetricsOffline(DEVICE_HOST_EDITABLE ? 'set host in Device Info' : 'device source unavailable');
+        } else {
+            try {
+                const query = DEVICE_HOST_EDITABLE ? ('?host=' + encodeURIComponent(host)) : '';
+                const res = await fetch('/api/device-stats' + query, {
+                    signal: AbortSignal.timeout(6000)
+                });
+                const json = await res.json();
+                if (!json.ok) throw new Error(json.error || 'Device stats unavailable');
+
+                const d = json.data;
+                const cpuAvg = Array.isArray(d.cores) && d.cores.length > 0
+                    ? d.cores.reduce((a, c) => a + c.usage, 0) / d.cores.length
+                    : 0;
+
+                const memTotalMb = Number(d.memory_total_mb ?? 0);
+                const memUsedMb = Number(d.memory_used_mb ?? 0);
+                const ramPercent = pct(memUsedMb, memTotalMb);
+
+                const storTotalGb = Number(d.storage_total_gb ?? 0);
+                const storFreeGb = Number(d.storage_free_gb ?? 0);
+                const storUsedGb = Math.max(0, storTotalGb - storFreeGb);
+                const storPercent = storTotalGb > 0 ? Math.round((storUsedGb / storTotalGb) * 100) : 0;
+
+                deviceTotalRamMb = memTotalMb > 0 ? memTotalMb : null;
+
+                set('m-cpu', cpuAvg.toFixed(0));
+                setBar('m-cpu-bar', cpuAvg);
+
+                const deviceMeta = `${d.manufacturer || ''} ${d.product_model || ''}`.trim();
+                set('m-load', deviceMeta || 'device live');
+                set('m-uptime', formatUptime(Number(d.uptime_seconds ?? 0)));
+
+                set('m-ram-used', `${gb(memUsedMb)} / ${gb(memTotalMb)}`);
+                set('m-ram-percent', `${ramPercent}%`);
+                setBar('m-ram-bar', ramPercent);
+
+                set('m-disk-used', `${storUsedGb.toFixed(1)} GB / ${storTotalGb.toFixed(1)} GB`);
+                set('m-disk-percent', `${storPercent}%`);
+                setBar('m-disk-bar', storPercent);
+            } catch (_) {
+                setDeviceMetricsOffline('device offline');
+            }
+        }
+
+        try {
+            const ps = await fetch(processStatsApi).then(r => r.json());
+            if (ps.running && ps.ram_mb !== null) {
+                const procRamMb = Number(ps.ram_mb);
+                set('m-proc-state', 'Running');
+                set('m-proc-ram', `${procRamMb.toFixed(0)} MB`);
+
+                if (deviceTotalRamMb && deviceTotalRamMb > 0) {
+                    const sharePct = (procRamMb / deviceTotalRamMb) * 100;
+                    set('m-proc-share', `${sharePct.toFixed(1)}% device RAM`);
+                    setBar('m-proc-bar', sharePct);
+                } else {
+                    set('m-proc-share', '--');
+                    setBar('m-proc-bar', 0);
+                }
+            } else {
+                set('m-proc-state', 'Offline');
+                const procRamEl = document.getElementById('m-proc-ram');
+                if (procRamEl) procRamEl.innerHTML = '<span class="offline-tag">offline</span>';
+                set('m-proc-share', '--');
+                setBar('m-proc-bar', 0);
+            }
+        } catch (_) {
+            set('m-proc-state', 'Offline');
+            const procRamEl = document.getElementById('m-proc-ram');
+            if (procRamEl) procRamEl.innerHTML = '<span class="offline-tag">offline</span>';
+            set('m-proc-share', '--');
+            setBar('m-proc-bar', 0);
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        applyServerButtonStates();
+        initializeServerState();
+        refreshInterval = setInterval(refreshInstanceSidebar, 2000);
+        fetchMonitor();
+        monInterval = setInterval(fetchMonitor, 3000);
+    });
+
+    window.addEventListener('beforeunload', () => {
+        clearInterval(refreshInterval);
+        clearInterval(monInterval);
+    });
+</script>
+</body>
+</html>

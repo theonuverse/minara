@@ -1,220 +1,267 @@
-#!/bin/bash
+#!/data/data/com.termux/files/usr/bin/bash
+# SPDX-License-Identifier: MIT
+#
+# Minara one-command setup for Termux
+# - Always installs/updates bionilux stack
+# - Installs Minara binary from a fixed release asset
+#
+set -euo pipefail
 
-# --- Color Codes ---
-G='\033[1;35m'
-B='\033[1;36m'
-R='\033[1;31m'
+readonly PREFIX="${PREFIX:-/data/data/com.termux/files/usr}"
+readonly GLIBC_PREFIX="$PREFIX/glibc"
+readonly BOX64_DEST="$PREFIX/bionilux/box64/bin/box64"
+readonly BOX64_REAL_DEST="$PREFIX/bionilux/box64/bin/box64.real"
+readonly BIONILUX_REPO="theonuverse/bionilux"
+
+readonly MINARA_VERSION="${MINARA_VERSION:-v0.2.0}"
+readonly MINARA_ASSET="minara"
+readonly MINARA_BASE="https://github.com/theonuverse/minara/releases/download/${MINARA_VERSION}"
+readonly MINARA_DEST="$PREFIX/bin/minara"
+
+G='\033[0;32m'
+Y='\033[1;33m'
+R='\033[0;31m'
+B='\033[0;34m'
 N='\033[0m'
 
-# --- Environment Detection ---
-detect_environment() {
-    local KERNEL_RELEASE=$(uname -r)
-    
-    case "$KERNEL_RELEASE" in
-        *"PRoot-Distro"*)
-            ENV="PROOT"
-            ;;
-        *"android"*)
-            ENV="TERMUX"
-            ;;
-        *"microsoft"* | *"Microsoft"*)
-            ENV="WSL"
-            ;;
-        *)
-            ENV="LINUX"
-            ;;
+ok()   { printf "${G}[+]${N} %s\n" "$*"; }
+info() { printf "${B}[.]${N} %s\n" "$*"; }
+warn() { printf "${Y}[!]${N} %s\n" "$*"; }
+die()  { printf "${R}[-]${N} %s\n" "$*" >&2; exit 1; }
+
+require_termux() {
+    if ! command -v pkg >/dev/null 2>&1; then
+        die "This setup script is Termux-only and requires pkg."
+    fi
+
+    case "$PREFIX" in
+        /data/data/com.termux/files/usr) ;;
+        *) warn "Non-standard PREFIX detected: $PREFIX" ;;
     esac
 }
 
-# --- Package Manager Detection ---
-detect_package_manager() {
-    if command -v apt-get &> /dev/null; then
-        PKG_MANAGER="apt"
-        PKG_UPDATE="apt-get update"
-        PKG_UPGRADE="apt-get upgrade -y"
-        PKG_INSTALL="apt-get install -y"
-    elif command -v dnf &> /dev/null; then
-        PKG_MANAGER="dnf"
-        PKG_UPDATE="dnf check-update || true"
-        PKG_UPGRADE="dnf upgrade -y"
-        PKG_INSTALL="dnf install -y"
-    else
-        echo -e "${R}[!]${N} No supported package manager found"
-        exit 1
+resolve_bionilux_release_tag() {
+    local pinned latest
+
+    pinned="${BIONILUX_VERSION:-}"
+    if [ -n "$pinned" ]; then
+        case "$pinned" in
+            v*) printf "%s" "$pinned" ;;
+            *) printf "v%s" "$pinned" ;;
+        esac
+        return
+    fi
+
+    latest=$(curl -fsSL "https://api.github.com/repos/${BIONILUX_REPO}/releases/latest" \
+        | sed -n 's/.*"tag_name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' \
+        | head -n 1) || true
+
+    if [ -n "$latest" ]; then
+        printf "%s" "$latest"
+        return
+    fi
+
+    printf "v0.3.0"
+}
+
+fix_libc() {
+    local lib
+    lib="$GLIBC_PREFIX/lib"
+
+    if [ -f "$lib/libc.so" ] && [ ! -L "$lib/libc.so" ]; then
+        mv "$lib/libc.so" "$lib/libc.so.script" 2>/dev/null || true
+    fi
+
+    if [ ! -L "$lib/libc.so" ]; then
+        ln -sf libc.so.6 "$lib/libc.so" 2>/dev/null || true
     fi
 }
 
-# --- Sudo Handler ---
-run_privileged() {
-    if [ "$(id -u)" -eq 0 ]; then
-        "$@"
-    elif command -v sudo &> /dev/null; then
-        sudo "$@"
-    elif command -v doas &> /dev/null; then
-        doas "$@"
-    else
-        echo -e "${R}[!]${N} Root privileges required but no sudo/doas available"
-        exit 1
+dl() {
+    local name="$1"
+    local dest="$2"
+
+    info "Downloading $name"
+    curl -fSL --retry 3 --retry-delay 2 --connect-timeout 15 --progress-bar \
+        -o "$dest" "$BASE/$name" || die "Download failed: $BASE/$name"
+}
+
+verify_with_sums() {
+    local sums_file="$1"
+    local file="$2"
+
+    if [ -f "$sums_file" ] && command -v sha256sum >/dev/null 2>&1; then
+        if sha256sum -c "$sums_file" --ignore-missing --status 2>/dev/null; then
+            ok "checksum OK: $file"
+        else
+            warn "checksum mismatch or not listed: $file (continuing)"
+        fi
     fi
 }
 
-# --- Silent Execution ---
-silent() {
-    if ! "$@" > /dev/null 2>&1; then
-        echo -e "${R}[!]${N} Error while executing: $*" >&2
-        return 1
-    fi
-}
+install_box64_wrapper() {
+    local real="$1"
+    local wrapper="$2"
+    local interp mode
 
-silent_privileged() {
-    if ! run_privileged "$@" > /dev/null 2>&1; then
-        echo -e "${R}[!]${N} Error while executing: $*" >&2
-        return 1
-    fi
-}
+    mode="direct"
+    interp="$(LC_ALL=C readelf -l "$real" 2>/dev/null \
+        | sed -n 's/.*Requesting program interpreter: \(.*\)]/\1/p' \
+        | head -n 1 || true)"
 
-# --- System Update (Termux) ---
-update_termux() {
-    echo -e "${B}[+]${N} Updating Termux packages..."
-    silent pkg upgrade -y -o Dpkg::Options::="--force-confold"
-}
-
-# --- System Update (Linux/WSL) ---
-update_system() {
-    detect_package_manager
-    echo -e "${B}[+]${N} Updating system packages ($PKG_MANAGER)..."
-    silent_privileged $PKG_UPDATE
-    silent_privileged $PKG_UPGRADE
-}
-
-# --- Install Dependencies (Linux/WSL) ---
-install_dependencies() {
-    local DEPS=""
-    local ARCH=$(uname -m)
-    
-    case "$PKG_MANAGER" in
-        apt)
-            DEPS="python3 python3-pip pipx git curl libcurl4t64"
-            if [ "$ARCH" = "aarch64" ]; then
-                DEPS="$DEPS box64"
-            fi
-            ;;
-        dnf)
-            DEPS="python3 python3-pip pipx git curl libcurl"
-            if [ "$ARCH" = "aarch64" ]; then
-                DEPS="$DEPS box64"
-            fi
-            ;;
+    case "$interp" in
+        *ld-linux-aarch64.so.1*) mode="glibc" ;;
     esac
-    
-    echo -e "${B}[+]${N} Installing dependencies..."
-    silent_privileged $PKG_INSTALL $DEPS
-}
 
-# --- Create Box64 Config (aarch64 only) ---
-create_box64rc() {
-    local ARCH=$(uname -m)
-    if [ "$ARCH" = "aarch64" ]; then
-        echo -e "${B}[+]${N} Creating Box64 configuration..."
-        cat > ~/.box64rc << 'EOF'
-[bedrock_server]
-BOX64_DYNAREC_BIGBLOCK=4
-BOX64_DYNAREC_STRONGMEM=1
-BOX64_DYNAREC_FASTNAN=1
-BOX64_DYNAREC_FASTROUND=1
-BOX64_DYNAREC_PAUSE=1
-BOX64_DYNAREC_ALIGNED_ATOMICS=0
-BOX64_MMAP32=1
+    cat > "$wrapper" << 'EOF'
+#!/data/data/com.termux/files/usr/bin/bash
+set -euo pipefail
+
+PREFIX="${PREFIX:-/data/data/com.termux/files/usr}"
+REAL="$PREFIX/bionilux/box64/bin/box64.real"
+
+if [ ! -x "$REAL" ]; then
+    echo "bionilux: missing box64 real binary: $REAL" >&2
+    exit 127
+fi
+EOF
+
+    if [ "$mode" = "glibc" ]; then
+        cat >> "$wrapper" << 'EOF'
+LOADER="$PREFIX/glibc/lib/ld-linux-aarch64.so.1"
+
+if [ ! -x "$LOADER" ]; then
+    echo "bionilux: missing glibc loader: $LOADER" >&2
+    exit 127
+fi
+
+exec "$LOADER" --library-path "$PREFIX/glibc/lib" --argv0 box64 "$REAL" "$@"
+EOF
+    else
+        cat >> "$wrapper" << 'EOF'
+exec "$REAL" "$@"
 EOF
     fi
+
+    chmod 755 "$wrapper"
+    info "box64 wrapper mode: $mode"
 }
 
-# --- Install Bedrux via pipx (Linux/WSL) ---
-install_bedrux() {
-    echo -e "${B}[+]${N} Installing Bedrux via pipx..."
-    silent pipx ensurepath
-    silent source ~/.bashrc
-    silent pipx install git+https://github.com/theonuverse/bedrux.git
-    create_box64rc
+install_bionilux_stack() {
+    local version deb_name archive_name
+
+    version="$(resolve_bionilux_release_tag)"
+    BASE="https://github.com/${BIONILUX_REPO}/releases/download/${version}"
+
+    printf "\n${B}== bionilux setup ${version} ==${N}\n"
+    info "Using release: $version"
+
+    fix_libc
+
+    curl -fsSL -o SHA256SUMS "$BASE/SHA256SUMS" 2>/dev/null || true
+
+    dl bionilux bionilux
+    verify_with_sums SHA256SUMS bionilux
+    install -m 755 bionilux "$PREFIX/bin/bionilux"
+    ok "bionilux installed: $PREFIX/bin/bionilux"
+
+    dl libbionilux_preload.so libbionilux_preload.so
+    verify_with_sums SHA256SUMS libbionilux_preload.so
+    install -m 755 libbionilux_preload.so "$GLIBC_PREFIX/lib/libbionilux_preload.so"
+    ok "preload installed: $GLIBC_PREFIX/lib/libbionilux_preload.so"
+
+    info "Resolving latest box64 .deb"
+    deb_name=$(curl -fsSL https://api.github.com/repos/Pi-Apps-Coders/box64-debs/contents/debian \
+        | sed -n 's/.*"name"[[:space:]]*:[[:space:]]*"\(box64-android_[^"]*_arm64\.deb\)".*/\1/p' \
+        | sort -V | tail -n 1) || die "Failed to query box64 deb list"
+    [ -n "$deb_name" ] || die "No box64 .deb found"
+
+    info "Downloading $deb_name"
+    curl -fSL --retry 3 --retry-delay 2 --connect-timeout 15 --progress-bar \
+        -o box64.deb \
+        "https://github.com/Pi-Apps-Coders/box64-debs/raw/master/debian/$deb_name" \
+        || die "Download failed: $deb_name"
+
+    dpkg-deb -x box64.deb box64_out || die "Failed to extract box64 .deb"
+    mkdir -p "$(dirname "$BOX64_DEST")"
+    install -m 755 box64_out/usr/local/bin/box64 "$BOX64_REAL_DEST" \
+        || die "Failed to install box64 real binary"
+    install_box64_wrapper "$BOX64_REAL_DEST" "$BOX64_DEST"
+    rm -rf box64.deb box64_out
+    ok "box64 installed: $BOX64_DEST"
+
+    info "Resolving latest x86_64 compatibility archive"
+    archive_name=$(curl -fsSL https://easycli.sh/proot-distro/ \
+        | grep -oE 'debian-trixie-x86_64-pd-v[0-9]+\.[0-9]+\.[0-9]+\.tar\.xz' \
+        | sort -V | tail -n 1) || die "Failed to locate x86_64 archive"
+    [ -n "$archive_name" ] || die "No x86_64 archive found"
+
+    info "Downloading $archive_name"
+    curl -fSL --retry 3 --retry-delay 2 --connect-timeout 15 --progress-bar \
+        -o "$archive_name" "https://easycli.sh/proot-distro/$archive_name" \
+        || die "Download failed: $archive_name"
+
+    mkdir -p "$GLIBC_PREFIX/lib/x86_64-linux-gnu"
+    tar -xf "$archive_name" \
+        --strip-components=4 \
+        -C "$GLIBC_PREFIX/lib/x86_64-linux-gnu" \
+        debian-trixie-x86_64/usr/lib/x86_64-linux-gnu \
+        || die "Failed to extract x86_64 compatibility libs"
+    rm -f "$archive_name"
+    ok "x86_64 compatibility libs installed"
 }
 
-# --- Installing Bedrux Environment (Termux) ---
-bedrux_env_install() {
-    
-    echo -e "${B}[+]${N} Installing PRoot Distro..."
-    silent pkg ins -y proot-distro
+install_minara_binary() {
+    local minara_url sums_file
 
-    if [ -d "$PREFIX/var/lib/proot-distro/installed-rootfs/bedrux" ]; then
-        echo -e "${B}[-]${N} Removing existing Bedrux environment..."
-        silent pd rm bedrux
-    fi
-    
-    echo -e "${B}[+]${N} Installing Bedrux Environment (Debian) might take a while..."
-    silent pd i --override-alias bedrux debian
-    
-    echo -e "${B}[+]${N} Setting up Bedrux inside PRoot..."
-    
-    silent pd sh bedrux -- bash -c '
-        DEPS="python3 python3-pip pipx git curl libcurl4t64"
-        ARCH=$(uname -m)
+    minara_url="$MINARA_BASE/$MINARA_ASSET"
+    sums_file="MINARA_SHA256SUMS"
 
-        if [ "$ARCH" = "aarch64" ]; then
-            DEPS="$DEPS box64"
-        fi
+    printf "\n${B}== Minara setup ${MINARA_VERSION} ==${N}\n"
+    info "Downloading Minara binary from $minara_url"
 
-        apt-get update
-        apt-get upgrade -y
-        apt-get install -y $DEPS
-        pipx ensurepath
-        source ~/.bashrc
-        pipx install git+https://github.com/theonuverse/bedrux.git
+    curl -fsSL -o "$sums_file" "$MINARA_BASE/SHA256SUMS" 2>/dev/null || true
 
-        if [ "$ARCH" = "aarch64" ]; then
-            cat > ~/.box64rc << EOF
-[bedrock_server]
-BOX64_DYNAREC_BIGBLOCK=4
-BOX64_DYNAREC_STRONGMEM=1
-BOX64_DYNAREC_FASTNAN=1
-BOX64_DYNAREC_FASTROUND=1
-BOX64_DYNAREC_PAUSE=1
-BOX64_DYNAREC_ALIGNED_ATOMICS=0
-BOX64_MMAP32=1
-EOF
-        fi
-    '
-}
+    curl -fSL --retry 3 --retry-delay 2 --connect-timeout 15 --progress-bar \
+        -o "$MINARA_ASSET" "$minara_url" || die "Download failed: $minara_url"
 
-# --- Setup for Termux ---
-setup_termux() {
-    update_termux
-    bedrux_env_install
-}
+    verify_with_sums "$sums_file" "$MINARA_ASSET"
 
-# --- Setup for Linux/WSL ---
-setup_linux() {
-    update_system
-    install_dependencies
-    install_bedrux
+    install -m 755 "$MINARA_ASSET" "$MINARA_DEST" || die "Failed to install $MINARA_DEST"
+
+    [ -f "$MINARA_DEST" ] || die "Installed file missing: $MINARA_DEST"
+    [ -x "$MINARA_DEST" ] || die "Installed file is not executable: $MINARA_DEST"
+
+    ok "Minara installed: $MINARA_DEST"
 }
 
 main() {
-    detect_environment
+    local tmpdir
 
-    case "$ENV" in
-        PROOT)
-            echo -e "${R}[!]${N} This command does not work inside PRoot."
-            echo -e "${R}[!]${N} Please run this script in native Termux."
-            exit 1
-            ;;
-        TERMUX)
-            setup_termux
-            ;;
-        WSL|LINUX)
-            setup_linux
-            ;;
-    esac
+    printf "\n${B}== Minara one-command setup (Termux) ==${N}\n"
 
-    echo -e "${G}[v]${N} Setup finished successfully!"
+    require_termux
+
+    info "Installing prerequisites"
+    pkg update -y >/dev/null 2>&1 || warn "pkg update failed, continuing"
+    pkg install -y binutils clang curl dpkg file git glibc-repo grep sed tar >/dev/null 2>&1 \
+        || die "Failed to install prerequisites"
+    pkg install -y glibc >/dev/null 2>&1 || die "Failed to install glibc"
+    ok "Prerequisites installed"
+
+    tmpdir="$(mktemp -d)"
+    trap 'rm -rf "$tmpdir"' EXIT
+    cd "$tmpdir"
+
+    install_bionilux_stack
+    install_minara_binary
+
+    printf "\n${G}Setup complete.${N}\n"
+    printf "\nRun Minara with:\n"
+    printf "  minara\n"
+    printf "  minara -d\n"
+    printf "\nOptional device monitoring:\n"
+    printf "  Install Asmo: https://github.com/theonuverse/asmo\n\n"
 }
 
-main
+main "$@"

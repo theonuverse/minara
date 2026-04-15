@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Minara - Server Manager</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap');
+        :root {
+            --surface-0: #0d0d0d;
+            --surface-1: #151515;
+            --surface-2: #1d1d1d;
+            --surface-3: #252525;
+
+            --text-primary: #f2f2f2;
+            --text-secondary: #b7b7b7;
+            --text-tertiary: #8d8d8d;
+
+            --accent: #ff7d3b;
+            --accent-hover: #ff965f;
+            --accent-soft: rgba(255, 125, 59, 0.16);
+            --accent-soft-strong: rgba(255, 125, 59, 0.28);
+
+            --line-subtle: rgba(255, 255, 255, 0.12);
+            --line-accent: rgba(255, 125, 59, 0.64);
+            --line-danger: rgba(255, 71, 87, 0.65);
+
+            --shadow-sm: 0 6px 18px rgba(0, 0, 0, 0.3);
+            --shadow-md: 0 12px 30px rgba(0, 0, 0, 0.38);
+            --shadow-hover: 0 16px 34px rgba(0, 0, 0, 0.45);
+            --focus-ring: 0 0 0 3px rgba(255, 125, 59, 0.28);
+
+            --radius-sm: 5px;
+            --radius-md: 5px;
+
+            --bar-track: #242424;
+            --bar-fill: #ff8a4d;
+            --ok: #ff8a4d;
+            --warn: #f2b555;
+            --crit: #e96a5e;
+            --ok-soft: #ff9a63;
+            --warn-soft: #f6c979;
+            --crit-soft: #ef8479;
+
+            --danger-bg: #cf5a4a;
+            --danger-hover: #dc6a59;
+            --danger-border: var(--line-danger);
+            --danger-border-hover: #f18b80;
+            --danger-text: #fefefe;
+            --danger-text-hover: #ffffff;
+
+            --status-live: #ff9a63;
+            --status-offline: #8d8d8d;
+            --status-offline-dot: #4a4a4a;
+            --success-bg: rgba(107, 211, 144, 0.14);
+            --success-border: rgba(107, 211, 144, 0.48);
+            --success-text: #d5f5de;
+            --error-bg: rgba(233, 106, 94, 0.15);
+            --error-border: rgba(233, 106, 94, 0.58);
+            --error-text: #ffd9d4;
+
+            /* legacy aliases used across inline styles and scripts */
+            --bg-base: var(--surface-0);
+            --bg-panel: var(--surface-1);
+            --bg-elev: var(--surface-2);
+            --border-soft: var(--line-subtle);
+            --border-strong: var(--line-accent);
+            --text-hero: var(--text-primary);
+            --text-strong: var(--text-primary);
+            --text-main: var(--text-primary);
+            --text-console: #e7e7e7;
+            --text-soft: var(--text-secondary);
+            --text-muted: var(--text-secondary);
+            --text-dim: var(--text-tertiary);
+            --text-subtle: var(--text-tertiary);
+            --text-faint: #7a7a7a;
+            --accent-border: var(--line-accent);
+            --pumpkin-black: #0f0f0f;
+            --pumpkin-white: #ffffff;
+            --pumpkin-blue: #4169e1;
+            --pumpkin-green: #00c853;
+            --pumpkin-purple: #9b59b6;
+            --pumpkin-pink: #ff69b4;
+            --pumpkin-yellow: #ffd93d;
+            --pumpkin-red: #ff4757;
+            --pumpkin-border: 1px solid var(--line-subtle);
+            --pumpkin-border-white: 1px solid rgba(255, 255, 255, 0.25);
+            --pumpkin-shadow: var(--shadow-sm);
+            --pumpkin-shadow-lg: var(--shadow-md);
+            --pumpkin-shadow-hover: var(--shadow-hover);
+        }
+        * { font-family: 'Manrope', sans-serif; box-sizing: border-box; }
+        body { background-color: var(--bg-base); color: var(--text-strong); }
+        .rounded-none,
+        .rounded-sm,
+        .rounded-md {
+            border-radius: var(--radius-sm) !important;
+        }
+        nav a {
+            border: 1px solid var(--line-subtle);
+            border-radius: var(--radius-sm);
+            transition: border-color 0.16s ease, background 0.16s ease, box-shadow 0.16s ease, color 0.16s ease, transform 0.16s ease;
+        }
+        nav a:hover {
+            transform: translateY(-1px);
+            border-color: var(--line-accent);
+            background: var(--accent-soft);
+            box-shadow: var(--shadow-sm);
+            color: var(--text-hero) !important;
+        }
+        .instance-card {
+            border: var(--pumpkin-border) !important;
+            box-shadow: var(--pumpkin-shadow);
+            border-radius: var(--radius-md);
+        }
+        .instance-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--line-accent) !important;
+            box-shadow: var(--pumpkin-shadow-lg);
+        }
+        #createModal > div {
+            border: var(--pumpkin-border) !important;
+            box-shadow: var(--pumpkin-shadow-lg);
+            border-radius: var(--radius-md);
+        }
+        #instanceSearch,
+        #instanceName,
+        #customVersion,
+        #releaseVersion,
+        #previewVersion {
+            border: var(--pumpkin-border) !important;
+            box-shadow: none;
+            border-radius: var(--radius-sm);
+        }
+        #instanceSearch:focus,
+        #instanceName:focus,
+        #customVersion:focus {
+            border-color: var(--line-accent) !important;
+            box-shadow: var(--focus-ring);
+        }
+        #createInstanceBtn,
+        #installBtn,
+        #releaseTab,
+        #previewTab,
+        #customTab {
+            border: var(--pumpkin-border) !important;
+            box-shadow: none;
+            border-radius: var(--radius-sm);
+            transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease, border-color 0.12s ease;
+        }
+        #createInstanceBtn:hover,
+        #installBtn:hover,
+        #releaseTab:hover,
+        #previewTab:hover,
+        #customTab:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-sm);
+        }
+        #createInstanceBtn,
+        #installBtn {
+            border-color: var(--line-accent) !important;
+        }
+        #createInstanceBtn:disabled,
+        #installBtn:disabled {
+            background-color: var(--surface-3) !important;
+            color: var(--text-tertiary) !important;
+            border-color: var(--line-subtle) !important;
+            box-shadow: none !important;
+            transform: none !important;
+            cursor: not-allowed !important;
+        }
+        #statusMessage,
+        #nameError,
+        #releaseCheckStatus,
+        #previewCheckStatus,
+        #customCheckStatus {
+            border-width: 1px !important;
+            border-style: solid;
+            border-color: var(--line-subtle);
+            border-radius: var(--radius-sm);
+        }
+        
+        .modal-hidden {
+            display: none !important;
+        }
+        
+        .modal-visible {
+            display: flex !important;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .spinner {
+            border: 1.5px solid var(--line-subtle);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 0.6s linear infinite;
+        }
+
+        .spinner-sm {
+            border: 1.5px solid var(--line-subtle);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            width: 14px;
+            height: 14px;
+            animation: spin 0.6s linear infinite;
+            display: inline-block;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <div class="flex">
+        <!-- Sidebar -->
+        <div class="w-56 flex flex-col flex-shrink-0" style="border-right: var(--pumpkin-border); background-color: var(--bg-base);">
+            <a href="/" class="block px-5 py-5" style="border-bottom: var(--pumpkin-border);">
+                <img src="/assets/transparent_logo.png" alt="Minara" style="display: block; width: 100%; max-width: 170px; height: auto; margin: 0 auto;" />
+            </a>
+            <nav class="p-3 flex flex-col gap-1 flex-1">
+                                         <a href="/" class="flex items-center gap-2.5 px-3 py-2.5 rounded-sm text-sm font-medium transition-colors"
+                                     style="background-color: var(--accent-soft-strong); color: var(--text-primary); border-color: var(--line-accent);">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+                    </svg>
+                    My Instances
+                </a>
+                     <a href="/device" class="flex items-center gap-2.5 px-3 py-2.5 rounded-sm text-sm font-medium transition-colors"
+                   style="color: var(--text-subtle);">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="5" y="2" width="14" height="20" rx="2"/><circle cx="12" cy="17" r="1" fill="currentColor" stroke="none"/>
+                    </svg>
+                    Device Info
+                </a>
+                    <a href="/backups" class="flex items-center gap-2.5 px-3 py-2.5 rounded-sm text-sm font-medium transition-colors"
+                       style="color: var(--text-subtle);">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="4" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="12" y1="14" x2="12" y2="18"/>
+                        </svg>
+                        Backups
+                    </a>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div id="mainContent" class="flex-1 flex flex-col p-12">
+            {% if instances.is_empty() %}
+                <div class="flex-1 flex items-center justify-center">
+                    <div class="text-center">
+                        <h2 class="text-3xl font-600 mb-4" style="color: var(--text-strong);">No Instances</h2>
+                        <p style="color: var(--text-soft);">Create server instances using the "+ Create Instance" button above the grid</p>
+                        <button id="createInstanceBtn"
+                            class="mt-6 px-6 py-3 rounded-sm font-medium text-sm transition-all"
+                            style="background-color: var(--accent); color: var(--bg-base); border: 1px solid var(--line-accent);">
+                        + Create Instance
+                    </button>
+                    </div>
+                </div>
+            {% else %}
+                <!-- Top bar: search + create button -->
+                <div class="w-full max-w-6xl mx-auto mb-8 flex gap-4 items-center">
+                    <div class="relative flex-1">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                             style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--text-subtle); pointer-events: none;">
+                            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                        </svg>
+                           <input type="text" id="instanceSearch" placeholder="Search instances..."
+                               class="w-full rounded-sm outline-none text-sm"
+                               style="background-color: var(--bg-elev); color: var(--text-strong); border: var(--pumpkin-border);
+                                      padding: 12px 16px 12px 44px;" />
+                    </div>
+                        <button id="createInstanceBtn"
+                            class="px-5 py-3 rounded-sm font-medium text-sm transition-all whitespace-nowrap"
+                            style="background-color: var(--accent); color: var(--bg-base); border: 1px solid var(--line-accent);">
+                        + Create Instance
+                    </button>
+                </div>
+
+                <!-- Instance grid -->
+                <div id="instanceGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-6xl mx-auto">
+                    {% for instance in instances %}
+                                <a href="/instance/{{ instance.name }}"
+                                    class="instance-card p-6 rounded-sm transition-all border"
+                           data-name="{{ instance.name }}"
+                           style="background-color: var(--bg-elev); border-color: var(--line-subtle);">
+                            <h3 class="text-xl font-600 mb-2" style="color: var(--text-strong);">{{ instance.name }}</h3>
+                            <p class="text-sm mb-4" style="color: var(--text-soft);">Minecraft Bedrock</p>
+                            <div class="flex items-center justify-between">
+                                  <span class="text-xs font-medium px-3 py-1 rounded-sm"
+                                      style="background-color: var(--accent-soft); color: var(--text-primary); border: 1px solid var(--line-accent);">
+                                    Click to manage
+                                </span>
+                            </div>
+                        </a>
+                    {% endfor %}
+                </div>
+
+                <!-- No results message (hidden by default) -->
+                <div id="noResults" class="hidden w-full max-w-6xl mx-auto text-center py-16" style="color: var(--text-subtle);">
+                    No instances found
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Create Instance Modal -->
+    <div id="createModal" 
+         class="modal-hidden fixed inset-0 z-50 bg-black/50">
+        <div class="rounded-sm p-8 w-full max-w-md border"
+               style="background-color: var(--bg-elev); border: var(--pumpkin-border); box-shadow: var(--shadow-md); border-radius: var(--radius-md);">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-600" style="color: var(--text-strong);">Create Instance</h2>
+                <button type="button" id="closeModalBtn" class="text-2xl leading-none cursor-pointer hover:opacity-75" style="color: var(--text-soft); background: none; border: none; padding: 0;">×</button>
+            </div>
+
+            <form id="createForm" class="space-y-4">
+                <!-- Instance Name -->
+                <div>
+                    <label class="block text-sm font-medium mb-2" style="color: var(--text-strong);">Instance Name</label>
+                          <input type="text" 
+                           id="instanceName" 
+                           placeholder="e.g., Survival, Creative" 
+                              class="w-full px-4 py-2 rounded-sm outline-none transition-all"
+                                    style="background-color: var(--bg-base); color: var(--text-strong); border: var(--pumpkin-border);"
+                           required />
+                              <div id="nameError" class="mt-2 px-3 py-2 rounded-sm text-sm" style="display: none; background-color: var(--error-bg); border: 1px solid var(--error-border); color: var(--error-text);"></div>
+                </div>
+
+                <!-- Version Selection -->
+                <div>
+                    <label class="block text-sm font-medium mb-2" style="color: var(--text-strong);">Server Version</label>
+                    
+                    <div class="flex gap-2 mb-3">
+                        <button type="button" id="releaseTab" class="flex-1 py-2 rounded-sm text-sm font-medium transition-all" style="background-color: var(--accent); color: var(--bg-base); border: 1px solid var(--line-accent);">Release</button>
+                        <button type="button" id="previewTab" class="flex-1 py-2 rounded-sm text-sm font-medium transition-all" style="background-color: var(--bg-panel); color: var(--text-secondary); border: var(--pumpkin-border);">Preview</button>
+                        <button type="button" id="customTab"  class="flex-1 py-2 rounded-sm text-sm font-medium transition-all" style="background-color: var(--bg-panel); color: var(--text-secondary); border: var(--pumpkin-border);">Custom</button>
+                    </div>
+
+                    <!-- Release -->
+                    <div id="releaseSection">
+                        <p id="releaseVersion" class="w-full px-4 py-2 rounded-sm text-sm" style="background-color: var(--bg-base); color: var(--text-strong); border: var(--pumpkin-border);">Fetching...</p>
+                        <div id="releaseCheckStatus" class="mt-2 px-3 py-2 rounded-sm text-sm" style="display: none;"></div>
+                    </div>
+
+                    <!-- Preview -->
+                    <div id="previewSection" style="display: none;">
+                        <p id="previewVersion" class="w-full px-4 py-2 rounded-sm text-sm" style="background-color: var(--bg-base); color: var(--text-strong); border: var(--pumpkin-border);">Fetching...</p>
+                        <div id="previewCheckStatus" class="mt-2 px-3 py-2 rounded-sm text-sm" style="display: none;"></div>
+                    </div>
+
+                    <!-- Custom -->
+                    <div id="customInput" style="display: none;">
+                        <div style="position: relative;">
+                            <input type="text" id="customVersion" placeholder="e.g., 1.26.3.1"
+                                class="w-full px-4 py-2 rounded-sm outline-none transition-all"
+                                   style="background-color: var(--bg-base); color: var(--text-strong); border: var(--pumpkin-border);" />
+                            <span id="customCheckSpinner" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); display: none;">
+                                <span class="spinner-sm"></span>
+                            </span>
+                        </div>
+                        <div id="customCheckStatus" class="mt-2 px-3 py-2 rounded-sm text-sm" style="display: none;"></div>
+                    </div>
+
+                    <input type="hidden" id="selectedVersion" />
+                </div>
+
+                <!-- Progress bar (hidden until install starts) -->
+                <div id="progressWrap" style="display: none;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <span id="progressLabel" style="font-size: 12px; color: var(--text-soft);">Downloading...</span>
+                        <span id="progressPct" style="font-size: 12px; font-weight: 600; color: var(--text-strong);">0%</span>
+                    </div>
+                    <div style="background: var(--bg-base); border-radius: var(--radius-sm); height: 8px; overflow: hidden; border: var(--pumpkin-border); box-shadow: none;">
+                        <div id="progressBar" style="height: 100%; width: 0%; border-radius: var(--radius-sm); background: var(--accent); transition: width 0.4s ease;"></div>
+                    </div>
+                </div>
+
+                <!-- Global status message -->
+                <div id="statusMessage" class="px-3 py-2 rounded-sm text-sm" style="display: none;"></div>
+
+                <!-- Submit -->
+                <div class="flex gap-3 pt-4">
+                        <button type="submit" id="installBtn"
+                            class="flex-1 px-4 py-2 rounded-sm font-medium transition-all flex items-center justify-center gap-2"
+                            style="background-color: var(--accent); color: var(--pumpkin-black); cursor: pointer; border: 1px solid var(--line-accent);"
+                            disabled>
+                        <span>Install</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // ---- Element refs ----
+        const modal             = document.getElementById('createModal');
+        const createBtn         = document.getElementById('createInstanceBtn');
+        const closeBtn          = document.getElementById('closeModalBtn');
+        const createForm        = document.getElementById('createForm');
+        const instanceNameInput = document.getElementById('instanceName');
+        const nameError         = document.getElementById('nameError');
+        const installBtn        = document.getElementById('installBtn');
+        const statusMessage     = document.getElementById('statusMessage');
+        const progressWrap      = document.getElementById('progressWrap');
+        const progressBar       = document.getElementById('progressBar');
+        const progressPct       = document.getElementById('progressPct');
+        const progressLabel     = document.getElementById('progressLabel');
+
+        const releaseTab        = document.getElementById('releaseTab');
+        const previewTab        = document.getElementById('previewTab');
+        const customTab         = document.getElementById('customTab');
+        const releaseSection    = document.getElementById('releaseSection');
+        const previewSection    = document.getElementById('previewSection');
+        const customInput       = document.getElementById('customInput');
+        const releaseVersionEl  = document.getElementById('releaseVersion');
+        const previewVersionEl  = document.getElementById('previewVersion');
+        const releaseCheckBox   = document.getElementById('releaseCheckStatus');
+        const previewCheckBox   = document.getElementById('previewCheckStatus');
+        const customVersionInput= document.getElementById('customVersion');
+        const customCheckBox    = document.getElementById('customCheckStatus');
+        const customSpinner     = document.getElementById('customCheckSpinner');
+        const selectedVersion   = document.getElementById('selectedVersion');
+
+        // ---- State ----
+        let currentTab    = 'release';
+        let versions      = { release: null, preview: null };
+        let versionOk     = { release: false, preview: false, custom: false };
+        let nameValid     = false;
+        let customDebounce = null;
+        let lastInstanceList = [];
+        let refreshInterval  = null;
+
+        // ---- Status box helpers ----
+        function showBox(el, ok, text) {
+            el.textContent = text;
+            el.style.display = 'block';
+            el.style.backgroundColor = ok ? 'var(--success-bg)' : 'var(--error-bg)';
+            el.style.border          = ok ? '1px solid var(--success-border)' : '1px solid var(--error-border)';
+            el.style.boxShadow       = 'var(--shadow-sm)';
+            el.style.color           = ok ? 'var(--success-text)' : 'var(--error-text)';
+        }
+
+        function hideBox(el) {
+            el.style.display = 'none';
+            el.textContent = '';
+            el.style.boxShadow = 'none';
+        }
+
+        // ---- Progress bar helpers ----
+        function showProgress(pct, label) {
+            progressWrap.style.display = 'block';
+            progressBar.style.width = pct + '%';
+            progressPct.textContent = pct + '%';
+            progressLabel.textContent = label;
+        }
+
+        function hideProgress() {
+            progressWrap.style.display = 'none';
+            progressBar.style.width = '0%';
+            progressPct.textContent = '0%';
+            progressLabel.textContent = 'Downloading...';
+        }
+
+        // ---- Install button gating ----
+        function updateInstallBtn() {
+            const vOk = currentTab === 'release' ? versionOk.release
+                      : currentTab === 'preview' ? versionOk.preview
+                      : versionOk.custom;
+            installBtn.disabled = !(nameValid && vOk);
+        }
+
+        // ---- Tab switching ----
+        function setTab(tab) {
+            currentTab = tab;
+            const tabs = { release: releaseTab, preview: previewTab, custom: customTab };
+            Object.entries(tabs).forEach(([key, btn]) => {
+                const active = key === tab;
+                btn.style.backgroundColor = active ? 'var(--accent)' : 'var(--bg-panel)';
+                btn.style.color           = active ? 'var(--bg-base)'  : 'var(--text-secondary)';
+                btn.style.border          = active ? '1px solid var(--line-accent)' : 'var(--pumpkin-border)';
+                btn.style.boxShadow       = active ? 'var(--shadow-sm)' : 'none';
+            });
+            releaseSection.style.display = tab === 'release' ? 'block' : 'none';
+            previewSection.style.display = tab === 'preview' ? 'block' : 'none';
+            customInput.style.display    = tab === 'custom'  ? 'block' : 'none';
+            if (tab === 'release') selectedVersion.value = versions.release || '';
+            if (tab === 'preview') selectedVersion.value = versions.preview || '';
+            updateInstallBtn();
+        }
+
+        releaseTab.addEventListener('click', () => setTab('release'));
+        previewTab.addEventListener('click', () => setTab('preview'));
+        customTab.addEventListener('click',  () => setTab('custom'));
+
+        // ---- Version check against server ----
+        async function checkVersion(version) {
+            const res = await fetch('/api/check-version/' + encodeURIComponent(version));
+            return res.json();
+        }
+
+        // ---- Fetch versions from wiki then verify each one ----
+        async function fetchVersions() {
+            releaseVersionEl.textContent = 'Fetching...';
+            previewVersionEl.textContent = 'Fetching...';
+            hideBox(releaseCheckBox);
+            hideBox(previewCheckBox);
+            versionOk.release = false;
+            versionOk.preview = false;
+
+            try {
+                const data = await fetch('/api/versions').then(r => r.json());
+                versions.release = data.release || null;
+                versions.preview = data.preview || null;
+
+                // Release
+                if (versions.release) {
+                    selectedVersion.value = versions.release;
+                    releaseVersionEl.textContent = 'Release: ' + versions.release + ' — checking...';
+                    const r = await checkVersion(versions.release);
+                    versionOk.release = r.found;
+                    releaseVersionEl.textContent = 'Release: ' + versions.release;
+                    if (!r.found) showBox(releaseCheckBox, false, r.message);
+                } else {
+                    releaseVersionEl.textContent = 'Not available';
+                    showBox(releaseCheckBox, false, 'No release version found from the wiki.');
+                }
+
+                // Preview
+                if (versions.preview) {
+                    previewVersionEl.textContent = 'Preview: ' + versions.preview + ' — checking...';
+                    const r = await checkVersion(versions.preview);
+                    versionOk.preview = r.found;
+                    previewVersionEl.textContent = 'Preview: ' + versions.preview;
+                    if (!r.found) showBox(previewCheckBox, false, r.message);
+                } else {
+                    previewVersionEl.textContent = 'Not available';
+                    showBox(previewCheckBox, false, 'No preview version found from the wiki.');
+                }
+
+            } catch (_) {
+                releaseVersionEl.textContent = 'Error fetching versions';
+                previewVersionEl.textContent = 'Error fetching versions';
+                showBox(releaseCheckBox, false, 'Could not reach the wiki. Check your connection.');
+            }
+
+            updateInstallBtn();
+        }
+
+        // ---- Instance name validation ----
+        instanceNameInput.addEventListener('input', () => {
+            const name = instanceNameInput.value.trim();
+            const invalidChars = ['/', '\\', ':', '*', '?', '"', '<', '>', '|'];
+            let error = '';
+
+            if (!name) {
+                error = '';
+            } else if (name.length > 64) {
+                error = 'Name is too long (max 64 characters)';
+            } else if (invalidChars.some(ch => name.includes(ch))) {
+                error = 'Name contains invalid characters';
+            }
+
+            if (error) {
+                showBox(nameError, false, error);
+                nameValid = false;
+            } else {
+                hideBox(nameError);
+                nameValid = name.length > 0;
+            }
+            updateInstallBtn();
+        });
+
+        // ---- Custom version: debounced live check ----
+        customVersionInput.addEventListener('input', () => {
+            const version = customVersionInput.value.trim();
+            selectedVersion.value = version;
+            versionOk.custom = false;
+            hideBox(customCheckBox);
+            customSpinner.style.display = 'none';
+            updateInstallBtn();
+
+            if (customDebounce) clearTimeout(customDebounce);
+            if (!version) return;
+
+            const fmt = /^\d{1,2}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/;
+            if (!fmt.test(version)) {
+                showBox(customCheckBox, false, 'Invalid format. Use: 1.21.0.3');
+                updateInstallBtn();
+                return;
+            }
+
+            customSpinner.style.display = 'inline-block';
+            customDebounce = setTimeout(async () => {
+                try {
+                    const r = await checkVersion(version);
+                    versionOk.custom = r.found;
+                    showBox(customCheckBox, r.found, r.found ? '✓ Version found!' : r.message);
+                } catch (_) {
+                    showBox(customCheckBox, false, 'Could not check version. Check your connection.');
+                }
+                customSpinner.style.display = 'none';
+                updateInstallBtn();
+            }, 600);
+        });
+
+        // ---- Modal open / close ----
+        createBtn.addEventListener('click', e => {
+            e.preventDefault();
+            modal.classList.remove('modal-hidden');
+            modal.classList.add('modal-visible');
+            fetchVersions();
+        });
+
+        function closeModal() {
+            modal.classList.remove('modal-visible');
+            modal.classList.add('modal-hidden');
+            resetForm();
+        }
+
+        closeBtn.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); closeModal(); });
+        modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+
+        // ---- Form submit ----
+        createForm.addEventListener('submit', async e => {
+            e.preventDefault();
+            const name    = instanceNameInput.value.trim();
+            const version = currentTab === 'custom' ? customVersionInput.value.trim() : selectedVersion.value;
+
+            if (!name || !version) {
+                showBox(statusMessage, false, 'Please fill in all fields.');
+                return;
+            }
+
+            installBtn.disabled = true;
+            installBtn.innerHTML = '<div class="spinner"></div><span>Installing...</span>';
+            hideBox(statusMessage);
+            hideProgress();
+
+            try {
+                const data = await fetch('/api/create-instance', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, version }),
+                }).then(r => r.json());
+
+                if (data.status === 'error') {
+                    showBox(statusMessage, false, data.message);
+                    installBtn.disabled = false;
+                    installBtn.innerHTML = '<span>Install</span>';
+                    return;
+                }
+
+                // Show progress bar
+                showProgress(0, 'Downloading...');
+
+                let polls = 0;
+                const poll = setInterval(async () => {
+                    polls++;
+                    try {
+                        const prog = await fetch('/api/instance-progress/' + name).then(r => r.json());
+                        const pct = prog.progress || 0;
+
+                        const label = pct < 90 ? 'Downloading...'
+                                    : pct < 100 ? 'Extracting...'
+                                    : 'Done!';
+                        showProgress(pct, label);
+
+                        if (pct >= 100) {
+                            clearInterval(poll);
+                            hideProgress();
+                            showBox(statusMessage, true, '✓ Instance created successfully!');
+                            setTimeout(() => { closeModal(); refreshInstanceGrid(); }, 2000);
+                        }
+                    } catch (_) {}
+
+                    if (polls >= 600) {
+                        clearInterval(poll);
+                        hideProgress();
+                        showBox(statusMessage, false, 'Taking longer than expected. Refresh the page in a moment.');
+                        installBtn.disabled = false;
+                        installBtn.innerHTML = '<span>Install</span>';
+                    }
+                }, 500);
+
+            } catch (_) {
+                showBox(statusMessage, false, 'An error occurred. Please try again.');
+                hideProgress();
+                installBtn.disabled = false;
+                installBtn.innerHTML = '<span>Install</span>';
+            }
+        });
+
+        function resetForm() {
+            createForm.reset();
+            currentTab = 'release';
+            nameValid  = false;
+            versionOk  = { release: false, preview: false, custom: false };
+            hideBox(nameError);
+            hideBox(releaseCheckBox);
+            hideBox(previewCheckBox);
+            hideBox(customCheckBox);
+            hideBox(statusMessage);
+            hideProgress();
+            selectedVersion.value = '';
+            installBtn.disabled   = true;
+            installBtn.innerHTML  = '<span>Install</span>';
+            customSpinner.style.display = 'none';
+            if (customDebounce) clearTimeout(customDebounce);
+            setTab('release');
+        }
+
+        instanceNameInput.addEventListener('keypress',   e => { if (e.key === 'Enter') e.preventDefault(); });
+        customVersionInput.addEventListener('keypress',  e => { if (e.key === 'Enter') e.preventDefault(); });
+
+        // ---- Auto-refresh grid and sidebar ----
+        async function refreshInstanceGrid() {
+            try {
+                const instances = await fetch('/api/instances').then(r => r.json());
+                const key = instances.join(',');
+                if (key === lastInstanceList.join(',')) return;
+                lastInstanceList = instances;
+
+                const html = await fetch('/').then(r => r.text());
+                const doc  = new DOMParser().parseFromString(html, 'text/html');
+
+                const curMain = document.getElementById('mainContent');
+                const newMain = doc.getElementById('mainContent');
+                if (curMain && newMain) {
+                    curMain.innerHTML = newMain.innerHTML;
+                    const newBtn = document.getElementById('createInstanceBtn');
+                    if (newBtn) newBtn.addEventListener('click', e => {
+                        e.preventDefault();
+                        modal.classList.remove('modal-hidden');
+                        modal.classList.add('modal-visible');
+                        fetchVersions();
+                    });
+                    const si = document.getElementById('instanceSearch');
+                    if (si) {
+                        si.addEventListener('input', handleSearch);
+                        if (si.value.trim()) si.dispatchEvent(new Event('input'));
+                    }
+                }
+            } catch (_) {}
+        }
+
+        async function refreshInstanceSidebar() {}
+
+        // ---- Search filter ----
+        function handleSearch() {
+            const query = this.value ? this.value.trim().toLowerCase() : '';
+            const cards = document.querySelectorAll('.instance-card');
+            let visible = 0;
+            cards.forEach(card => {
+                const name = card.dataset.name.toLowerCase();
+                const match = name.includes(query);
+                card.style.display = match ? '' : 'none';
+                if (match) visible++;
+            });
+            const noResults = document.getElementById('noResults');
+            if (noResults) noResults.classList.toggle('hidden', visible > 0);
+        }
+
+        const searchInput = document.getElementById('instanceSearch');
+        if (searchInput) searchInput.addEventListener('input', handleSearch);
+
+        document.addEventListener('DOMContentLoaded', () => {
+            refreshInstanceGrid();
+            refreshInstanceSidebar();
+            refreshInterval = setInterval(() => {
+                refreshInstanceGrid();
+                refreshInstanceSidebar();
+            }, 2000);
+        });
+
+        window.addEventListener('beforeunload', () => clearInterval(refreshInterval));
+    </script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+[package]
+name = "minara"
+version = "2.0.0"
+edition = "2024"
+
+[dependencies]
+askama = "0.15"
+askama_web = { version = "0.15", features = ["axum-0.8"] }
+axum = { version = "0.8.8", features = ["multipart"] }
+futures-util = "0.3.32"
+regex = "1"
+reqwest = { version = "0.11", features = ["stream"] }
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.149"
+tokio = { version = "1.50.0", features = ["full"] }
+tokio-stream = { version = "0.1.18", features = ["sync"] }
+tower-http = { version = "0.6.8", features = ["fs", "trace"] }
+zip = "0.6"
+sha2 = "0.10"
+uuid = { version = "1", features = ["v4"] }
+libc = "0.2"
