@@ -6,7 +6,7 @@
 <p align="center"><strong>Version 2.0.0</strong></p>
 <p align="center">
   A modern, Rust-powered control panel for managing
-  <strong>Minecraft Bedrock Dedicated Server</strong> instances on Android (Termux) and Linux.
+  <strong>Minecraft Bedrock Dedicated Server</strong> instances on Android using Termux.
 </p>
 
 <p align="center">
