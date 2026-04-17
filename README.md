@@ -159,6 +159,9 @@ yes | pkg up
 # Install dependencies
 pkg install git rust -y
 
+# Install bionilux via this command or build it using the repo
+curl -sL theonuverse.github.io/bionilux/setup | bash
+
 # Clone the repo
 git clone https://github.com/theonuverse/minara.git
 cd minara
